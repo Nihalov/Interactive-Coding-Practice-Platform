@@ -1,0 +1,12 @@
+# Documentation (not part of the codebase)
+Documentations/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Future frontend (uncomment once added)
+# frontend/node_modules/
+# frontend/dist/
+# frontend/.env
