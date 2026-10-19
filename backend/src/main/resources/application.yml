@@ -1,3 +1,8 @@
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-secret-change-me-please-32bytes-min!!}
+    expiration-minutes: 60
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5433/codearena

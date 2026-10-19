@@ -1,11 +1,15 @@
 package com.nihal.codearena.auth.service;
 
+import com.nihal.codearena.auth.dto.AuthResponse;
+import com.nihal.codearena.auth.dto.LoginRequest;
 import com.nihal.codearena.auth.dto.RegisterRequest;
 import com.nihal.codearena.auth.dto.UserResponse;
 import com.nihal.codearena.auth.entity.Role;
 import com.nihal.codearena.auth.entity.User;
 import com.nihal.codearena.auth.repository.UserRepository;
 import com.nihal.codearena.common.exception.DuplicateResourceException;
+import com.nihal.codearena.common.exception.InvalidCredentialsException;
+import com.nihal.codearena.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,18 +21,16 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     @Transactional
     public UserResponse register(RegisterRequest request) {
-        // 1. Normalize: "  Nihal@Example.COM " and "nihal@example.com" must be the same user
         String email = request.email().trim().toLowerCase();
 
-        // 2. Friendly duplicate check (the DB unique constraint is the real safety net)
         if (userRepository.existsByEmail(email)) {
             throw new DuplicateResourceException("Email is already registered");
         }
 
-        // 3. Build the entity. Role is set server-side, never taken from the client.
         User user = User.builder()
                 .email(email)
                 .username(request.username().trim())
@@ -36,11 +38,33 @@ public class AuthService {
                 .role(Role.USER)
                 .build();
 
-        // 4. Save
-        User saved = userRepository.save(user);
+        return toResponse(userRepository.save(user));
+    }
 
-        // 5. Map to a response DTO (no passwordHash)
-        return toResponse(saved);
+    @Transactional(readOnly = true)
+    public AuthResponse login(LoginRequest request) {
+        String email = request.email().trim().toLowerCase();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(InvalidCredentialsException::new);
+
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            throw new InvalidCredentialsException();
+        }
+
+        return new AuthResponse(
+                jwtService.generateToken(user),
+                "Bearer",
+                jwtService.getExpirationSeconds(),
+                toResponse(user)
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponse getCurrentUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return toResponse(user);
     }
 
     private UserResponse toResponse(User user) {
