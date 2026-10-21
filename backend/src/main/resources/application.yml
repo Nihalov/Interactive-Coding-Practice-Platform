@@ -1,6 +1,6 @@
 app:
   jwt:
-    secret: ${JWT_SECRET:dev-only-secret-change-me-please-32bytes-min!!}
+    secret: ${JWT_SECRET}  #dev-only-secret-change-me-please-32bytes-min!!
     expiration-minutes: 60
 
 spring:

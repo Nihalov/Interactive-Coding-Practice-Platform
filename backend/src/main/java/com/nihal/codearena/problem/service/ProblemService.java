@@ -9,6 +9,7 @@ import com.nihal.codearena.problem.dto.ProblemSummaryResponse;
 import com.nihal.codearena.problem.entity.Difficulty;
 import com.nihal.codearena.problem.entity.Problem;
 import com.nihal.codearena.problem.repository.ProblemRepository;
+import com.nihal.codearena.testcase.repository.TestCaseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProblemService {
 
     private final ProblemRepository problemRepository;
+    private final TestCaseRepository testCaseRepository;
 
     @Transactional(readOnly = true)
     public PageResponse<ProblemSummaryResponse> list(Difficulty difficulty, Pageable pageable) {
@@ -78,6 +80,7 @@ public class ProblemService {
         if (!problemRepository.existsById(id)) {
             throw new ResourceNotFoundException("Problem not found");
         }
+        testCaseRepository.deleteByProblemId(id);
         problemRepository.deleteById(id);
     }
 
