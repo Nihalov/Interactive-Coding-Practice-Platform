@@ -9,6 +9,7 @@ import com.nihal.codearena.problem.dto.ProblemSummaryResponse;
 import com.nihal.codearena.problem.entity.Difficulty;
 import com.nihal.codearena.problem.entity.Problem;
 import com.nihal.codearena.problem.repository.ProblemRepository;
+import com.nihal.codearena.submission.repository.SubmissionRepository;
 import com.nihal.codearena.testcase.repository.TestCaseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +23,7 @@ public class ProblemService {
 
     private final ProblemRepository problemRepository;
     private final TestCaseRepository testCaseRepository;
+    private final SubmissionRepository submissionRepository;
 
     @Transactional(readOnly = true)
     public PageResponse<ProblemSummaryResponse> list(Difficulty difficulty, Pageable pageable) {
@@ -79,6 +81,9 @@ public class ProblemService {
     public void delete(Long id) {
         if (!problemRepository.existsById(id)) {
             throw new ResourceNotFoundException("Problem not found");
+        }
+        if (submissionRepository.existsByProblemId(id)) {
+            throw new DuplicateResourceException("Cannot delete a problem that already has submissions");
         }
         testCaseRepository.deleteByProblemId(id);
         problemRepository.deleteById(id);
