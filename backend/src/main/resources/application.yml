@@ -6,8 +6,30 @@ app:
     time-limit-ms: 3000
     compile-timeout-ms: 15000
     max-output-bytes: 1048576
+  recovery:
+    interval-ms: 60000
+    queued-after-minutes: 2
+    running-after-minutes: 5
 
 spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: ${RABBIT_USERNAME}
+    password: ${RABBIT_PASSWORD}
+    listener:
+      simple:
+        concurrency: 2
+        max-concurrency: 2
+        prefetch: 1
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 2s
+          multiplier: 2
+          max-interval: 10s
+
   data:
     web:
       pageable:
@@ -24,7 +46,7 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true

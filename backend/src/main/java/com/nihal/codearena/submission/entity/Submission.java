@@ -57,6 +57,9 @@ public class Submission {
     @Column(name = "submitted_at", updatable = false)
     private LocalDateTime submittedAt;
 
+    @Column(name = "started_at")
+    private LocalDateTime startedAt;
+
     @Column(name = "finished_at")
     private LocalDateTime finishedAt;
 }

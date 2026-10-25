@@ -8,4 +8,6 @@ import java.util.List;
 public interface SubmissionTestResultRepository extends JpaRepository<SubmissionTestResult, Long> {
 
     List<SubmissionTestResult> findBySubmissionIdOrderByOrderIndexAsc(Long submissionId);
+
+    void deleteBySubmissionId(Long submissionId);
 }

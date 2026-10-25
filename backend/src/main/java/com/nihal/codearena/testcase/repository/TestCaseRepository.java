@@ -18,6 +18,8 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Long> {
 
     void deleteByProblemId(Long problemId);
 
+    long countByProblemId(Long problemId);
+
     @Query("select coalesce(max(t.orderIndex), 0) from TestCase t where t.problem.id = :problemId")
     int findMaxOrderIndex(@Param("problemId") Long problemId);
 }

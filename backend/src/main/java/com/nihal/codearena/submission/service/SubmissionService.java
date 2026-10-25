@@ -5,6 +5,7 @@ import com.nihal.codearena.common.exception.ResourceNotFoundException;
 import com.nihal.codearena.execution.JudgeResult;
 import com.nihal.codearena.execution.JudgeResult.CaseResult;
 import com.nihal.codearena.execution.JudgeService;
+import com.nihal.codearena.messaging.SubmissionPublisher;
 import com.nihal.codearena.problem.entity.Problem;
 import com.nihal.codearena.problem.repository.ProblemRepository;
 import com.nihal.codearena.submission.dto.SubmissionResponse;
@@ -39,56 +40,90 @@ public class SubmissionService {
     private final UserRepository userRepository;
     private final JudgeService judgeService;
     private final SubmissionQueryService queryService;
+    private final SubmissionPublisher publisher;
     private final TransactionTemplate tx;
 
-    // Deliberately NOT @Transactional: each step below opens its own short transaction
+    private record Job(String sourceCode, Long problemId) {}
+
+    /** API side: record the submission, publish a job, return immediately. */
     public SubmissionResponse submit(Long userId, SubmitRequest request) {
         Problem problem = problemRepository.findBySlug(request.problemSlug())
                 .orElseThrow(() -> new ResourceNotFoundException("Problem not found"));
 
-        List<TestCase> tests = testCaseRepository
-                .findByProblemIdOrderByOrderIndexAscIdAsc(problem.getId());
-        if (tests.isEmpty()) {
+        long testCount = testCaseRepository.countByProblemId(problem.getId());
+        if (testCount == 0) {
             throw new ResourceNotFoundException("This problem has no test cases yet");
         }
 
-        // Transaction 1: record the submission as QUEUED
+        // The row is committed here, before anything is published
         Long submissionId = tx.execute(status -> {
             Submission s = Submission.builder()
                     .user(userRepository.getReferenceById(userId))
                     .problem(problemRepository.getReferenceById(problem.getId()))
                     .sourceCode(request.sourceCode())
                     .status(SubmissionStatus.QUEUED)
-                    .totalCount(tests.size())
+                    .totalCount((int) testCount)
                     .build();
             return submissionRepository.save(s).getId();
         });
 
-        // Transaction 2: mark it RUNNING
-        tx.executeWithoutResult(status -> {
-            Submission s = submissionRepository.findById(submissionId).orElseThrow();
-            s.setStatus(SubmissionStatus.RUNNING);
-        });
-
-        // No transaction here: user code runs without holding a DB connection
-        JudgeResult result;
-        try {
-            result = judgeService.judge(request.sourceCode(), tests, true);
-        } catch (RuntimeException e) {
-            log.error("Judging crashed for submission {}", submissionId, e);
-            result = new JudgeResult(SubmissionStatus.SYSTEM_ERROR, "Judging failed",
-                    0, tests.size(), List.of());
-        }
-
-        // Transaction 3: store results and the final verdict
-        saveResult(submissionId, result, tests);
+        publisher.publishQuietly(submissionId);
 
         return queryService.get(submissionId, userId);
+    }
+
+    /** Worker side: called once per delivered message. Safe to call more than once for the same id. */
+    public void process(Long submissionId) {
+        Boolean claimed = tx.execute(status ->
+                submissionRepository.claim(submissionId, LocalDateTime.now()) == 1);
+        if (!Boolean.TRUE.equals(claimed)) {
+            log.info("Submission {} is already claimed or finished; skipping", submissionId);
+            return;
+        }
+
+        try {
+            Job job = tx.execute(status -> {
+                Submission s = submissionRepository.findById(submissionId).orElseThrow();
+                return new Job(s.getSourceCode(), s.getProblem().getId());
+            });
+
+            List<TestCase> tests = testCaseRepository
+                    .findByProblemIdOrderByOrderIndexAscIdAsc(job.problemId());
+            if (tests.isEmpty()) {
+                markFailed(submissionId, "Problem has no test cases");
+                return;
+            }
+
+            // No transaction open while user code runs
+            JudgeResult result = judgeService.judge(job.sourceCode(), tests, true);
+            saveResult(submissionId, result, tests);
+
+        } catch (RuntimeException e) {
+            log.error("Processing failed for submission {}; releasing it for retry", submissionId, e);
+            tx.executeWithoutResult(status -> submissionRepository.release(submissionId));
+            throw e;   // the listener's retry policy takes over
+        }
+    }
+
+    /** Terminal failure: called when retries are exhausted (dead-letter queue). */
+    public void markFailed(Long submissionId, String message) {
+        tx.executeWithoutResult(status ->
+                submissionRepository.findById(submissionId).ifPresent(s -> {
+                    if (s.getStatus() == SubmissionStatus.QUEUED
+                            || s.getStatus() == SubmissionStatus.RUNNING) {
+                        s.setStatus(SubmissionStatus.SYSTEM_ERROR);
+                        s.setMessage(message);
+                        s.setFinishedAt(LocalDateTime.now());
+                    }
+                }));
     }
 
     private void saveResult(Long submissionId, JudgeResult result, List<TestCase> tests) {
         tx.executeWithoutResult(status -> {
             Submission s = submissionRepository.findById(submissionId).orElseThrow();
+
+            // Idempotent: a re-processed submission replaces its old results
+            resultRepository.deleteBySubmissionId(submissionId);
 
             List<SubmissionTestResult> rows = new ArrayList<>();
             long maxTimeMs = 0;
@@ -104,7 +139,6 @@ public class SubmissionService {
                         .sample(sample)
                         .status(c.status())
                         .executionTimeMs(c.timeMs())
-                        // Hidden cases: store nothing but verdict and time
                         .input(sample ? c.input() : null)
                         .expectedOutput(sample ? c.expectedOutput() : null)
                         .actualOutput(sample ? truncate(c.actualOutput()) : null)

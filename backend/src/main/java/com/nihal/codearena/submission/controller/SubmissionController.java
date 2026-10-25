@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -28,7 +27,7 @@ public class SubmissionController {
     @PostMapping("/submissions")
     public ResponseEntity<SubmissionResponse> submit(@AuthenticationPrincipal Jwt jwt,
                                                      @Valid @RequestBody SubmitRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return ResponseEntity.accepted()
                 .body(submissionService.submit(userId(jwt), request));
     }
 
