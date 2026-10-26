@@ -3,8 +3,14 @@ app:
     secret: ${JWT_SECRET}  #dev-only-secret-change-me-please-32bytes-min!!
     expiration-minutes: 60
   runner:
-    time-limit-ms: 3000
-    compile-timeout-ms: 15000
+    mode: docker
+    docker-binary: docker
+    image: eclipse-temurin:21-jdk
+    memory: 512m
+    cpus: "1"
+    pids-limit: 64
+    time-limit-ms: 4000
+    compile-timeout-ms: 20000
     max-output-bytes: 1048576
   recovery:
     interval-ms: 60000

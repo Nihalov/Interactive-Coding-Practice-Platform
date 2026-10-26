@@ -4,7 +4,6 @@ import com.nihal.codearena.execution.JudgeResult.CaseResult;
 import com.nihal.codearena.submission.entity.SubmissionStatus;
 import com.nihal.codearena.testcase.entity.TestCase;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -12,13 +11,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class JudgeService {
 
     private final CodeExecutor executor;
 
+    /** Throws ExecutionFailedException if the execution infrastructure fails (the caller decides about retries). */
     public JudgeResult judge(String sourceCode, List<TestCase> tests, boolean stopOnFirstFailure) {
         try (ExecutionSession session = executor.open(sourceCode)) {
 
@@ -43,17 +42,14 @@ public class JudgeService {
                     if (overall == SubmissionStatus.ACCEPTED) {
                         overall = result.status();
                     }
-                    if (stopOnFirstFailure) {
+                    // After a timeout or output overflow the sandbox has been destroyed
+                    boolean sandboxLost = run.timedOut() || run.outputLimitExceeded();
+                    if (stopOnFirstFailure || sandboxLost) {
                         break;
                     }
                 }
             }
             return new JudgeResult(overall, null, passed, tests.size(), results);
-
-        } catch (ExecutionFailedException e) {
-            log.error("Execution infrastructure failure", e);
-            return new JudgeResult(SubmissionStatus.SYSTEM_ERROR,
-                    "Execution failed", 0, tests.size(), List.of());
         }
     }
 
@@ -61,8 +57,12 @@ public class JudgeService {
         SubmissionStatus status;
         if (run.timedOut()) {
             status = SubmissionStatus.TIME_LIMIT_EXCEEDED;
-        } else if (run.outputLimitExceeded() || run.exitCode() != 0) {
+        } else if (run.outputLimitExceeded()) {
             status = SubmissionStatus.RUNTIME_ERROR;
+        } else if (run.exitCode() != 0) {
+            status = isOutOfMemory(run)
+                    ? SubmissionStatus.MEMORY_LIMIT_EXCEEDED
+                    : SubmissionStatus.RUNTIME_ERROR;
         } else if (sameOutput(run.stdout(), test.getExpectedOutput())) {
             status = SubmissionStatus.ACCEPTED;
         } else {
@@ -72,11 +72,15 @@ public class JudgeService {
                 run.stdout(), run.stderr(), run.durationMs());
     }
 
+    // 137 = killed by the kernel's out-of-memory killer; the JVM message covers the -Xmx heap limit
+    private static boolean isOutOfMemory(RunResult run) {
+        return run.exitCode() == 137 || run.stderr().contains("OutOfMemoryError");
+    }
+
     static boolean sameOutput(String actual, String expected) {
         return normalize(actual).equals(normalize(expected));
     }
 
-    // Ignore \r\n vs \n, trailing spaces on each line, and trailing blank lines
     private static String normalize(String text) {
         return Arrays.stream(text.replace("\r\n", "\n").split("\n", -1))
                 .map(String::stripTrailing)

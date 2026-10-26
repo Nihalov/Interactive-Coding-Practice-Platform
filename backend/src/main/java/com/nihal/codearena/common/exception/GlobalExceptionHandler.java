@@ -1,6 +1,7 @@
 package com.nihal.codearena.common.exception;
 
 import com.nihal.codearena.common.response.ErrorResponse;
+import com.nihal.codearena.execution.ExecutionFailedException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -92,6 +93,13 @@ public class GlobalExceptionHandler {
                                                           HttpServletRequest request) {
         log.error("Unexpected error on {}", request.getRequestURI(), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong", request, null);
+    }
+
+    @ExceptionHandler(ExecutionFailedException.class)
+    public ResponseEntity<ErrorResponse> handleExecutionFailed(ExecutionFailedException ex,
+                                                               HttpServletRequest request) {
+        log.error("Execution infrastructure failure on {}", request.getRequestURI(), ex);
+        return build(HttpStatus.SERVICE_UNAVAILABLE, "Code execution is temporarily unavailable", request, null);
     }
 
     private ResponseEntity<ErrorResponse> build(HttpStatus status, String message,

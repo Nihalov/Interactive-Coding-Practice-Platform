@@ -2,6 +2,7 @@ package com.nihal.codearena.execution;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.FileSystemUtils;
 
@@ -14,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "app.runner.mode", havingValue = "local")
 public class LocalJavaExecutor implements CodeExecutor {
 
     private final long timeLimitMs;
