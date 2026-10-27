@@ -27,6 +27,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     boolean existsByProblemId(Long problemId);
 
+    // New in Step 12: used for the acceptance rate in /stats
+    long countByUserIdAndStatus(Long userId, SubmissionStatus status);
+
     List<Submission> findTop50ByStatusAndSubmittedAtBefore(SubmissionStatus status, LocalDateTime before);
 
     List<Submission> findTop50ByStatusAndStartedAtBefore(SubmissionStatus status, LocalDateTime before);

@@ -8,6 +8,7 @@ import com.nihal.codearena.execution.JudgeService;
 import com.nihal.codearena.messaging.SubmissionPublisher;
 import com.nihal.codearena.problem.entity.Problem;
 import com.nihal.codearena.problem.repository.ProblemRepository;
+import com.nihal.codearena.progress.service.ProgressService;
 import com.nihal.codearena.submission.dto.SubmissionResponse;
 import com.nihal.codearena.submission.dto.SubmitRequest;
 import com.nihal.codearena.submission.entity.Submission;
@@ -32,6 +33,7 @@ import java.util.List;
 public class SubmissionService {
 
     private static final int MAX_STORED_CHARS = 5000;
+    private final ProgressService progressService;
 
     private final SubmissionRepository submissionRepository;
     private final SubmissionTestResultRepository resultRepository;
@@ -155,6 +157,11 @@ public class SubmissionService {
             s.setTotalCount(result.total());
             s.setExecutionTimeMs(maxTimeMs);
             s.setFinishedAt(LocalDateTime.now());
+            // Same transaction as the verdict: progress can never disagree with the submission
+            if (result.status() != SubmissionStatus.SYSTEM_ERROR) {
+                progressService.record(s.getUser().getId(), s.getProblem().getId(), s.getId(),
+                        result.status(), maxTimeMs, s.getFinishedAt());
+            }
         });
     }
 
