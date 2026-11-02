@@ -1,5 +1,6 @@
 package com.nihal.codearena.submission.controller;
 
+import com.nihal.codearena.common.ratelimit.RateLimits;
 import com.nihal.codearena.common.response.PageResponse;
 import com.nihal.codearena.submission.dto.SubmissionResponse;
 import com.nihal.codearena.submission.dto.SubmissionSummaryResponse;
@@ -23,12 +24,14 @@ public class SubmissionController {
 
     private final SubmissionService submissionService;
     private final SubmissionQueryService queryService;
+    private final RateLimits rateLimits;
 
     @PostMapping("/submissions")
     public ResponseEntity<SubmissionResponse> submit(@AuthenticationPrincipal Jwt jwt,
                                                      @Valid @RequestBody SubmitRequest request) {
-        return ResponseEntity.accepted()
-                .body(submissionService.submit(userId(jwt), request));
+        Long userId = userId(jwt);
+        rateLimits.checkSubmission(userId);
+        return ResponseEntity.accepted().body(submissionService.submit(userId, request));
     }
 
     @GetMapping("/submissions/{id}")

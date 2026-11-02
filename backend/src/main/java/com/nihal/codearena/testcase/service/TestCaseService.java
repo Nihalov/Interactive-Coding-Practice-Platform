@@ -1,8 +1,10 @@
 package com.nihal.codearena.testcase.service;
 
 import com.nihal.codearena.common.exception.ResourceNotFoundException;
+import com.nihal.codearena.problem.cache.ProblemCache;
 import com.nihal.codearena.problem.entity.Problem;
 import com.nihal.codearena.problem.repository.ProblemRepository;
+import com.nihal.codearena.testcase.dto.SampleList;
 import com.nihal.codearena.testcase.dto.SampleTestCaseResponse;
 import com.nihal.codearena.testcase.dto.TestCaseRequest;
 import com.nihal.codearena.testcase.dto.TestCaseResponse;
@@ -20,17 +22,22 @@ public class TestCaseService {
 
     private final TestCaseRepository testCaseRepository;
     private final ProblemRepository problemRepository;
+    private final ProblemCache problemCache;
 
-    @Transactional(readOnly = true)
+    // No @Transactional: a cache hit must not touch the database.
+    // The cached list contains sample cases only, so hidden data can never leak through the cache.
     public List<SampleTestCaseResponse> getSamples(String slug) {
-        Problem problem = problemRepository.findBySlug(slug)
-                .orElseThrow(() -> new ResourceNotFoundException("Problem not found"));
+        return problemCache.samples(slug, () -> {
+            Problem problem = problemRepository.findBySlug(slug)
+                    .orElseThrow(() -> new ResourceNotFoundException("Problem not found"));
 
-        return testCaseRepository
-                .findByProblemIdAndSampleTrueOrderByOrderIndexAscIdAsc(problem.getId())
-                .stream()
-                .map(t -> new SampleTestCaseResponse(t.getInput(), t.getExpectedOutput()))
-                .toList();
+            List<SampleTestCaseResponse> items = testCaseRepository
+                    .findByProblemIdAndSampleTrueOrderByOrderIndexAscIdAsc(problem.getId())
+                    .stream()
+                    .map(t -> new SampleTestCaseResponse(t.getInput(), t.getExpectedOutput()))
+                    .toList();
+            return new SampleList(items);
+        }).items();
     }
 
     @Transactional(readOnly = true)
@@ -55,7 +62,9 @@ public class TestCaseService {
                 .orderIndex(testCaseRepository.findMaxOrderIndex(problemId) + 1)
                 .build();
 
-        return toResponse(testCaseRepository.save(testCase));
+        TestCaseResponse response = toResponse(testCaseRepository.save(testCase));
+        problemCache.evictSamples(problem.getSlug());
+        return response;
     }
 
     @Transactional
@@ -67,6 +76,7 @@ public class TestCaseService {
         testCase.setExpectedOutput(request.expectedOutput());
         testCase.setSample(request.sample());
 
+        problemCache.evictSamples(testCase.getProblem().getSlug());
         return toResponse(testCase);
     }
 
@@ -74,7 +84,10 @@ public class TestCaseService {
     public void delete(Long problemId, Long testCaseId) {
         TestCase testCase = testCaseRepository.findByIdAndProblemId(testCaseId, problemId)
                 .orElseThrow(() -> new ResourceNotFoundException("Test case not found"));
+
+        String slug = testCase.getProblem().getSlug();
         testCaseRepository.delete(testCase);
+        problemCache.evictSamples(slug);
     }
 
     private void ensureProblemExists(Long problemId) {

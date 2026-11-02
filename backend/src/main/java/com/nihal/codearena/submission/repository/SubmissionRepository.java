@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,6 +30,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     // New in Step 12: used for the acceptance rate in /stats
     long countByUserIdAndStatus(Long userId, SubmissionStatus status);
+    long countByUserIdAndStatusIn(Long userId, Collection<SubmissionStatus> statuses);
 
     List<Submission> findTop50ByStatusAndSubmittedAtBefore(SubmissionStatus status, LocalDateTime before);
 

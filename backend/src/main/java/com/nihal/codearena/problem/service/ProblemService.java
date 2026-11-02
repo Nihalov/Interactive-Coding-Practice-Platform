@@ -3,6 +3,8 @@ package com.nihal.codearena.problem.service;
 import com.nihal.codearena.common.exception.DuplicateResourceException;
 import com.nihal.codearena.common.exception.ResourceNotFoundException;
 import com.nihal.codearena.common.response.PageResponse;
+import com.nihal.codearena.problem.cache.ProblemCache;
+import com.nihal.codearena.problem.dto.ProblemPageSnapshot;
 import com.nihal.codearena.problem.dto.ProblemRequest;
 import com.nihal.codearena.problem.dto.ProblemResponse;
 import com.nihal.codearena.problem.dto.ProblemSummaryResponse;
@@ -24,20 +26,31 @@ public class ProblemService {
     private final ProblemRepository problemRepository;
     private final TestCaseRepository testCaseRepository;
     private final SubmissionRepository submissionRepository;
+    private final ProblemCache problemCache;
 
-    @Transactional(readOnly = true)
+    // No @Transactional on the two reads: a cache hit must not touch the database at all.
+    // The repository calls inside the loaders open their own short read transactions.
+
     public PageResponse<ProblemSummaryResponse> list(Difficulty difficulty, Pageable pageable) {
-        Page<Problem> page = (difficulty == null)
-                ? problemRepository.findAll(pageable)
-                : problemRepository.findByDifficulty(difficulty, pageable);
-        return PageResponse.from(page.map(this::toSummary));
+        String variant = (difficulty == null ? "ALL" : difficulty.name())
+                + ":" + pageable.getPageNumber()
+                + ":" + pageable.getPageSize()
+                + ":" + pageable.getSort();
+
+        return problemCache.list(variant, () -> {
+            Page<Problem> page = (difficulty == null)
+                    ? problemRepository.findAll(pageable)
+                    : problemRepository.findByDifficulty(difficulty, pageable);
+            return ProblemPageSnapshot.from(PageResponse.from(page.map(this::toSummary)));
+        }).toPageResponse();
     }
 
-    @Transactional(readOnly = true)
     public ProblemResponse getBySlug(String slug) {
-        Problem problem = problemRepository.findBySlug(slug)
-                .orElseThrow(() -> new ResourceNotFoundException("Problem not found"));
-        return toResponse(problem);
+        return problemCache.detail(slug, () -> {
+            Problem problem = problemRepository.findBySlug(slug)
+                    .orElseThrow(() -> new ResourceNotFoundException("Problem not found"));
+            return toResponse(problem);
+        });
     }
 
     @Transactional
@@ -56,7 +69,9 @@ public class ProblemService {
                 .difficulty(request.difficulty())
                 .build();
 
-        return toResponse(problemRepository.save(problem));
+        Problem saved = problemRepository.save(problem);
+        problemCache.evictProblem(saved.getSlug());
+        return toResponse(saved);
     }
 
     @Transactional
@@ -74,19 +89,22 @@ public class ProblemService {
         problem.setDescription(request.description());
         problem.setDifficulty(request.difficulty());
 
+        problemCache.evictProblem(problem.getSlug());
         return toResponse(problem);
     }
 
     @Transactional
     public void delete(Long id) {
-        if (!problemRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Problem not found");
-        }
+        Problem problem = problemRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Problem not found"));
+
         if (submissionRepository.existsByProblemId(id)) {
             throw new DuplicateResourceException("Cannot delete a problem that already has submissions");
         }
+
         testCaseRepository.deleteByProblemId(id);
-        problemRepository.deleteById(id);
+        problemRepository.delete(problem);
+        problemCache.evictProblem(problem.getSlug());
     }
 
     private static String toSlug(String title) {

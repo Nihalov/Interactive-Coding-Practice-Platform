@@ -2,6 +2,7 @@ package com.nihal.codearena.submission.service;
 
 import com.nihal.codearena.auth.repository.UserRepository;
 import com.nihal.codearena.common.exception.ResourceNotFoundException;
+import com.nihal.codearena.common.exception.TooManyRequestsException;
 import com.nihal.codearena.execution.JudgeResult;
 import com.nihal.codearena.execution.JudgeResult.CaseResult;
 import com.nihal.codearena.execution.JudgeService;
@@ -20,6 +21,7 @@ import com.nihal.codearena.testcase.entity.TestCase;
 import com.nihal.codearena.testcase.repository.TestCaseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -45,10 +47,20 @@ public class SubmissionService {
     private final SubmissionPublisher publisher;
     private final TransactionTemplate tx;
 
+    @Value("${app.rate-limit.max-active-submissions}")
+    private int maxActiveSubmissions;
+
     private record Job(String sourceCode, Long problemId) {}
 
     /** API side: record the submission, publish a job, return immediately. */
     public SubmissionResponse submit(Long userId, SubmitRequest request) {
+        long active = submissionRepository.countByUserIdAndStatusIn(
+                userId, List.of(SubmissionStatus.QUEUED, SubmissionStatus.RUNNING));
+        if (active >= maxActiveSubmissions) {
+            throw new TooManyRequestsException(
+                    "You already have " + active + " submissions in progress. Wait for one to finish.", 5);
+        }
+
         Problem problem = problemRepository.findBySlug(request.problemSlug())
                 .orElseThrow(() -> new ResourceNotFoundException("Problem not found"));
 

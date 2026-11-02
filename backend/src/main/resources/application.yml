@@ -16,6 +16,15 @@ app:
     interval-ms: 60000
     queued-after-minutes: 2
     running-after-minutes: 5
+  rate-limit:
+    submissions-per-minute: 10
+    runs-per-minute: 20
+    logins-per-minute: 10
+    registrations-per-hour: 10
+    max-active-submissions: 3
+  cache:
+    problem-ttl-minutes: 10
+    list-ttl-minutes: 5
 
 spring:
   rabbitmq:
@@ -41,6 +50,12 @@ spring:
       pageable:
         default-page-size: 20
         max-page-size: 50
+    redis:
+      host: localhost
+      port: 6379
+      password: ${REDIS_PASSWORD}
+      timeout: 500ms
+      connect-timeout: 500ms
 
   datasource:
     url: jdbc:postgresql://localhost:5433/codearena
