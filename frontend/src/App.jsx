@@ -4,6 +4,7 @@ import { Layout } from './components/Layout'
 import { LoginPage } from './pages/LoginPage'
 import { ProblemsPage } from './pages/ProblemsPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { ProblemDetailPage } from './pages/ProblemDetailPage'
 
 export default function App() {
   return (
@@ -19,6 +20,9 @@ export default function App() {
         </Route>
 
         <Route path="*" element={<p className="center-note">Page not found.</p>} />
+
+          <Route path="/problems" element={<ProblemsPage />} />
+          <Route path="/problems/:slug" element={<ProblemDetailPage />} />
       </Routes>
   )
 }
