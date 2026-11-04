@@ -9,7 +9,9 @@ export function Layout() {
             <header className="topbar">
                 <span className="brand">CodeArena</span>
                 <nav>
+                    <NavLink to="/dashboard">Dashboard</NavLink>
                     <NavLink to="/problems">Problems</NavLink>
+                    <NavLink to="/submissions">Submissions</NavLink>
                 </nav>
                 <div className="spacer" />
                 <span className="who">

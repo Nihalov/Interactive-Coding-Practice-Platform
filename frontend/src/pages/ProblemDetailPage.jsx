@@ -120,7 +120,10 @@ function ProblemWorkspace({ slug }) {
         )
     }
     if (!loaded.problem) {
-        return <p className="muted">Loading…</p>
+        return  <p className="muted">
+                    <Link to="/problems">← All problems</Link> ·{' '}
+                    <Link to={`/submissions?problem=${slug}`}>My submissions</Link>
+                </p>
     }
 
     const { problem, samples } = loaded

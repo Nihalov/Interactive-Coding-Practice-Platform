@@ -24,6 +24,14 @@ export const submissionsApi = {
         api('/api/submissions', { method: 'POST', body: { problemSlug, sourceCode } }),
 
     get: (id) => api(`/api/submissions/${id}`),
+
+    history: ({ problem, page, size }) => {
+        const query = new URLSearchParams({ page: String(page), size: String(size) })
+        if (problem) {
+            query.set('problem', problem)
+        }
+        return api(`/api/users/me/submissions?${query}`)
+    },
 }
 
 /**

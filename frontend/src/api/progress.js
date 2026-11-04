@@ -6,4 +6,8 @@ export const progressApi = {
         const page = await api('/api/users/me/progress?size=50')
         return new Map(page.content.map((p) => [p.problemSlug, p]))
     },
+
+    stats: () => api('/api/users/me/stats'),
+
+    page: ({ page, size }) => api(`/api/users/me/progress?page=${page}&size=${size}`),
 }

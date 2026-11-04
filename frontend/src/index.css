@@ -420,3 +420,63 @@ code {
     transform: rotate(360deg);
   }
 }
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.card-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.card-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 6rem 1fr 4rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.35rem 0;
+}
+
+.bar {
+  height: 0.6rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: var(--primary);
+}
+
+.bar-fill.easy {
+  background: var(--easy);
+}
+
+.bar-fill.medium {
+  background: var(--medium);
+}
+
+.bar-fill.hard {
+  background: var(--hard);
+}
