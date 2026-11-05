@@ -8,6 +8,7 @@ import { ProblemsPage } from './pages/ProblemsPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { SubmissionDetailPage } from './pages/SubmissionDetailPage'
 import { SubmissionsPage } from './pages/SubmissionsPage'
+import { WorkspacePage } from './pages/WorkspacePage'
 
 export default function App() {
     return (
@@ -21,6 +22,7 @@ export default function App() {
                     <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/problems" element={<ProblemsPage />} />
                     <Route path="/problems/:slug" element={<ProblemDetailPage />} />
+                    <Route path="/problems/:slug/workspace" element={<WorkspacePage />} />
                     <Route path="/submissions" element={<SubmissionsPage />} />
                     <Route path="/submissions/:id" element={<SubmissionDetailPage />} />
                 </Route>

@@ -480,3 +480,171 @@ code {
 .bar-fill.hard {
   background: var(--hard);
 }
+
+.ws-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.ws-status {
+  font-size: 0.85rem;
+}
+
+.ws-scroll {
+  height: calc(100vh - 260px);
+  min-height: 360px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.ws-svg {
+  display: block;
+  user-select: none;
+}
+
+.ws-grid-line {
+  stroke: var(--border);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+
+.ws-hint {
+  fill: var(--muted);
+  font-size: 15px;
+}
+
+.ws-el {
+  touch-action: none;
+}
+
+.ws-el.draggable {
+  cursor: grab;
+}
+
+.ws-el.draggable:active {
+  cursor: grabbing;
+}
+
+.ws-shape {
+  fill: var(--surface);
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+
+.ws-el.selected .ws-shape {
+  stroke: var(--primary);
+  stroke-width: 3;
+}
+
+.ws-empty {
+  stroke: var(--muted);
+  stroke-dasharray: 4 3;
+}
+
+.ws-value {
+  fill: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ws-index {
+  fill: var(--muted);
+  font-size: 11px;
+}
+
+.ws-name {
+  fill: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ws-variable {
+  fill: var(--bg);
+}
+
+.ws-note {
+  fill: #fff3bf;
+  stroke: #e6c200;
+}
+
+.ws-note-text {
+  fill: #3b3200;
+  font-size: 13px;
+}
+
+.ws-pointer {
+  fill: var(--primary);
+  stroke: var(--primary);
+}
+
+.ws-pointer-text {
+  fill: var(--primary-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ws-pointer-line {
+  stroke: var(--primary);
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.ws-el.selected .ws-pointer {
+  stroke: var(--text);
+  stroke-width: 3;
+}
+
+.ws-arrow {
+  stroke: var(--muted);
+  stroke-width: 2;
+}
+
+.ws-el.selected .ws-arrow {
+  stroke: var(--primary);
+  stroke-width: 3;
+}
+
+.ws-hit {
+  stroke: transparent;
+  stroke-width: 14;
+}
+
+.ws-arrow-label {
+  fill: var(--muted);
+  font-size: 12px;
+}
+
+.ws-arrowhead {
+  fill: var(--muted);
+}
+
+.ws-pointerhead {
+  fill: var(--primary);
+}
+
+.banner {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.banner.warn {
+  border-color: var(--medium);
+}
+
+.banner.problem {
+  border-color: var(--danger);
+}
+
+.banner-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}

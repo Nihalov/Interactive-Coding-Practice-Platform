@@ -120,10 +120,7 @@ function ProblemWorkspace({ slug }) {
         )
     }
     if (!loaded.problem) {
-        return  <p className="muted">
-                    <Link to="/problems">← All problems</Link> ·{' '}
-                    <Link to={`/submissions?problem=${slug}`}>My submissions</Link>
-                </p>
+        return <p className="muted">Loading…</p>
     }
 
     const { problem, samples } = loaded
@@ -132,7 +129,9 @@ function ProblemWorkspace({ slug }) {
         <div className="split">
             <section className="panel">
                 <p className="muted">
-                    <Link to="/problems">← All problems</Link>
+                    <Link to="/problems">← All problems</Link> ·{' '}
+                    <Link to={`/submissions?problem=${slug}`}>My submissions</Link> ·{' '}
+                    <Link to={`/problems/${slug}/workspace`}>Dry-run workspace</Link>
                 </p>
                 <h1>{problem.title}</h1>
                 <DifficultyBadge value={problem.difficulty} />
