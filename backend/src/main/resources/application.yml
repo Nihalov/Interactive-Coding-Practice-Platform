@@ -27,9 +27,14 @@ app:
     list-ttl-minutes: 5
 
 spring:
+  config:
+    # Lets a local copy of the repository root's .env file supply the values below.
+    # Environment variables still take precedence, so this is safe for deployments.
+    import: optional:file:../.env[.properties]
+
   rabbitmq:
-    host: localhost
-    port: 5672
+    host: ${RABBIT_HOST:localhost}
+    port: ${RABBIT_PORT:5672}
     username: ${RABBIT_USERNAME}
     password: ${RABBIT_PASSWORD}
     listener:
@@ -51,14 +56,14 @@ spring:
         default-page-size: 20
         max-page-size: 50
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD}
       timeout: 500ms
       connect-timeout: 500ms
 
   datasource:
-    url: jdbc:postgresql://localhost:5433/codearena
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/codearena}
     username: ${DB_USERNAME:codearena}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver

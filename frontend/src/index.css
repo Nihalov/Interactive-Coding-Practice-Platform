@@ -489,6 +489,80 @@ code {
   margin-bottom: 0.75rem;
 }
 
+.ws-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 1rem;
+  align-items: start;
+}
+
+.ws-inspector {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ws-inspector h2 {
+  margin: 0;
+}
+
+.ws-inspector input,
+.ws-inspector textarea,
+.ws-inspector select {
+  min-width: 0;
+  width: 100%;
+}
+
+.ws-inspector textarea,
+.ws-inspector select,
+.ws-selection select {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.ws-inspector textarea {
+  resize: vertical;
+}
+
+.ws-selection {
+  max-width: 360px;
+  margin-bottom: 0.75rem;
+}
+
+button.ws-delete {
+  color: var(--danger);
+}
+
+@media (max-width: 800px) {
+  .topbar {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+  .topbar nav {
+    order: 1;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+  }
+  .topbar .spacer {
+    display: none;
+  }
+  .topbar .who {
+    margin-left: auto;
+    max-width: 40vw;
+    overflow-wrap: anywhere;
+  }
+  .ws-layout {
+    grid-template-columns: 1fr;
+  }
+  .ws-inspector {
+    grid-row: 1;
+  }
+}
+
 .ws-status {
   font-size: 0.85rem;
 }

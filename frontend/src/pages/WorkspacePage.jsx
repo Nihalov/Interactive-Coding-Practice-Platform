@@ -1,16 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { describeError } from '../api/errors'
 import { problemsApi } from '../api/problems'
 import { workspaceApi } from '../api/workspace'
 import { Canvas } from '../workspace/Canvas'
+import { ElementEditor } from '../workspace/ElementEditor'
+import { deleteElement, updateElement } from '../workspace/editing'
+import { createHistory, historyReducer } from '../workspace/history'
 import { MAX_ELEMENTS, createElement } from '../workspace/model'
 
 function WorkspaceEditor({ slug, problem, workspace, onReload }) {
     const initialElements = workspace.state?.elements ?? []
 
-    const [elements, setElements] = useState(initialElements)
+    const [history, dispatch] = useReducer(historyReducer, initialElements, createHistory)
+    const elements = history.present
     const [version, setVersion] = useState(workspace.version) // null until the first save
     const [savedJson, setSavedJson] = useState(() => JSON.stringify(initialElements))
     const [selectedId, setSelectedId] = useState(null)
@@ -21,6 +25,31 @@ function WorkspaceEditor({ slug, problem, workspace, onReload }) {
 
     const dirty = useMemo(() => JSON.stringify(elements) !== savedJson, [elements, savedJson])
     const full = elements.length >= MAX_ELEMENTS
+    const selected = elements.find((e) => e.id === selectedId)
+    const canConnect = elements.filter((e) => e.type !== 'ARROW').length >= 2
+
+    const removeSelected = useCallback(() => {
+        if (!selectedId) return
+        dispatch({ type: 'replace', elements: deleteElement(elements, selectedId) })
+        setSelectedId(null)
+    }, [elements, selectedId])
+
+    useEffect(() => {
+        function onKeyDown(event) {
+            if (event.target instanceof HTMLElement &&
+                (event.target.closest('input, textarea, select') || event.target.isContentEditable)) return
+            const key = event.key.toLowerCase()
+            if ((event.ctrlKey || event.metaKey) && (key === 'z' || key === 'y')) {
+                event.preventDefault()
+                dispatch({ type: key === 'y' || event.shiftKey ? 'redo' : 'undo' })
+            } else if ((key === 'delete' || key === 'backspace') && selectedId) {
+                event.preventDefault()
+                removeSelected()
+            }
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => window.removeEventListener('keydown', onKeyDown)
+    }, [selectedId, removeSelected])
 
     const save = useCallback(
         async (versionOverride) => {
@@ -76,15 +105,13 @@ function WorkspaceEditor({ slug, problem, workspace, onReload }) {
     }, [dirty])
 
     const handleMove = useCallback((id, x, y) => {
-        setElements((prev) =>
-            prev.map((e) => (e.id === id && (e.x !== x || e.y !== y) ? { ...e, x, y } : e)),
-        )
+        dispatch({ type: 'move', id, x, y })
     }, [])
 
     function handleAdd(type) {
         if (full) return
         const element = createElement(type, elements)
-        setElements([...elements, element])
+        dispatch({ type: 'replace', elements: [...elements, element] })
         setSelectedId(element.id)
     }
 
@@ -129,6 +156,14 @@ function WorkspaceEditor({ slug, problem, workspace, onReload }) {
                 <button className="secondary" onClick={() => handleAdd('TEXT')} disabled={full}>
                     + Note
                 </button>
+                <button className="secondary" onClick={() => handleAdd('ARROW')} disabled={full || !canConnect}
+                    title="Connect two elements; choose endpoints in the editor">
+                    + Arrow
+                </button>
+                <button className="secondary" onClick={() => dispatch({ type: 'undo' })}
+                    disabled={!history.past.length} title="Ctrl/Cmd+Z">Undo</button>
+                <button className="secondary" onClick={() => dispatch({ type: 'redo' })}
+                    disabled={!history.future.length} title="Ctrl/Cmd+Shift+Z or Ctrl+Y">Redo</button>
                 <div className="spacer" />
                 <span className="muted ws-status">{status}</span>
                 <button className="secondary" onClick={handleDiscard} disabled={!dirty || saving}>
@@ -168,8 +203,25 @@ function WorkspaceEditor({ slug, problem, workspace, onReload }) {
                 </div>
             )}
 
-            <div className="ws-scroll">
-                <Canvas elements={elements} selectedId={selectedId} onSelect={setSelectedId} onMove={handleMove} />
+            <p className="hint">Add an element, then select it to edit. Drag to move. Use Save to keep your workspace.</p>
+            {full && <p className="hint">Workspace limit reached ({MAX_ELEMENTS} elements). Delete an element to add another.</p>}
+            <label className="ws-selection">Selected element
+                <select aria-label="Selected element" value={selected?.id ?? ''} onChange={(e) => setSelectedId(e.target.value || null)}>
+                    <option value="">Select on the canvas or choose here</option>
+                    {elements.map((e) => <option key={e.id} value={e.id}>{e.type.toLowerCase()}: {e.name || e.id}</option>)}
+                </select>
+            </label>
+            <div className="ws-layout">
+                <div className="ws-scroll">
+                    <Canvas elements={elements} selectedId={selectedId} onSelect={setSelectedId} onMove={handleMove}
+                        onMoveStart={() => dispatch({ type: 'move-start' })}
+                        onMoveEnd={() => dispatch({ type: 'move-end' })} />
+                </div>
+                {selected ? (
+                    <ElementEditor key={JSON.stringify(selected)} element={selected} elements={elements}
+                        onApply={(updated) => dispatch({ type: 'replace', elements: updateElement(elements, updated) })}
+                        onDelete={removeSelected} />
+                ) : <aside className="panel ws-inspector"><p className="muted">Select an element to edit its contents or connections.</p></aside>}
             </div>
         </div>
     )

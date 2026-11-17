@@ -28,7 +28,7 @@ export function shorten(text, max) {
     return s.length > max ? `${s.slice(0, max - 1)}…` : s
 }
 
-/** Ids must match the backend rule [A-Za-z0-9_-]{1,64}; numbers only ever go up, so ids are never reused */
+/** Allocate an id not used by any current element. */
 function nextId(elements, prefix) {
     const pattern = new RegExp(`^${prefix}-(\\d+)$`)
     let max = 0
@@ -44,7 +44,7 @@ function nextId(elements, prefix) {
 /** Builds a new element with sensible defaults, positioned so new ones do not hide each other */
 export function createElement(type, elements) {
     const count = elements.filter((e) => e.type === type).length
-    const base = SPAWN[type]
+    const base = SPAWN[type] ?? { x: 0, y: 0 }
     const x = base.x + (count % 6) * 36
     const y = base.y + (count % 8) * 80
 
@@ -88,6 +88,14 @@ export function createElement(type, elements) {
             }
         case 'TEXT':
             return { id: nextId(elements, 'note'), type, x, y, text: 'Note' }
+        case 'ARROW': {
+            const targets = elements.filter((e) => e.type !== 'ARROW')
+            if (targets.length < 2) throw new Error('Add at least two elements before connecting them.')
+            return {
+                id: nextId(elements, 'arrow'), type,
+                fromElementId: targets[0].id, toElementId: targets[1].id, label: '',
+            }
+        }
         default:
             throw new Error(`Unknown element type: ${type}`)
     }

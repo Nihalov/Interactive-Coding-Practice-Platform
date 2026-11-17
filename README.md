@@ -1,117 +1,130 @@
-# Interactive Coding Practice Platform
+# CodeArena
 
-A production-style **Interactive Coding Practice Platform** built with Java and Spring Boot.
+CodeArena is an interactive Java coding-practice platform. Users can browse problems, run Java code against sample cases, submit it for asynchronous judging, review their submission history and progress, and keep a per-problem dry-run workspace.
 
-The platform allows users to browse programming problems, write and execute Java solutions, submit solutions against predefined test cases, view detailed execution results, track their progress, and use a virtual workspace for algorithm dry-runs and notes.
+## What is implemented
 
-> **Status:** 🚧 Under active development
+- Registration, login, JWT authentication, and role-protected admin APIs
+- Problem browsing with difficulty filtering and pagination
+- Sample execution and asynchronous submission judging through RabbitMQ
+- Docker-isolated Java execution with CPU, memory, process, timeout, output, filesystem, and network restrictions
+- PostgreSQL persistence, Redis-backed caching and rate limiting, submission recovery, and progress statistics
+- A React/Monaco editor, submission history, and a saved workspace with editable arrays, variables, pointers, notes, connecting arrows, deletion, and undo/redo
 
-## Overview
+The workspace editor and operational tooling are still being completed. WebSocket updates, a browser-based admin console, richer problem metadata, comprehensive automated tests, OpenAPI documentation, and CI are not implemented yet.
 
-Traditional coding-practice platforms are good at code editing and automated evaluation, but algorithm practice often requires learners to mentally simulate data structures and program execution or use paper and external notebooks for dry runs.
+## Prerequisites
 
-This project combines an online Java coding environment with a persistent virtual workspace for algorithm practice.
+- Java 25 and Maven Wrapper support (`java --version`)
+- Node.js 20 or later and npm
+- Docker Desktop with Docker Compose
+- The Docker image used for untrusted Java execution:
 
-### Core capabilities
+  ```powershell
+  docker pull eclipse-temurin:21-jdk
+  ```
 
-- User registration and authentication
-- JWT-based authentication and authorization
-- Programming problem browsing and filtering
-- Online Java code editor
-- Sample code execution
-- Solution submission and automated test evaluation
-- Submission history and execution results
-- User progress and statistics
-- Virtual dry-run workspace for algorithms and notes
-- Asynchronous code execution using RabbitMQ and workers
-- Isolated Java code execution using Docker containers
-- Redis caching for suitable read-heavy operations
-- WebSocket-based real-time submission updates
-- Admin management of problems and test cases
+## Local setup
 
+1. Create local configuration. Do not commit the resulting `.env` file.
 
-## Technology Stack
+   ```powershell
+   Copy-Item .env.example .env
+   ```
 
-| Area | Technology |
-|---|---|
-| Language | Java 21+ |
-| Backend | Spring Boot |
-| API | REST |
-| Security | Spring Security + JWT |
-| Database | PostgreSQL |
-| ORM | Spring Data JPA + Hibernate |
-| Validation | Jakarta Bean Validation |
-| Messaging | RabbitMQ |
-| Caching | Redis |
-| Code Execution | JDK + Docker-based isolated workers |
-| Real-Time | WebSocket / STOMP or simpler WebSocket protocol |
-| Testing | JUnit 5 + Mockito + Spring Boot Test |
-| Build | Maven |
-| Containerization | Docker + Docker Compose |
-| API Documentation | OpenAPI / Swagger |
-| Version Control | Git + GitHub |
-| Observability | SLF4J / Logback initially |
+   Replace every `CHANGE_ME` value. Use a distinct, locally generated value for `JWT_SECRET` that is at least 32 characters long.
 
+2. Start PostgreSQL, RabbitMQ, and Redis. On the current development machine, reuse the existing containers to keep the original problems and accounts:
 
-## Security
+   ```powershell
+   docker start codearena-postgres codearena-rabbitmq-1 codearena-redis-1
+   docker ps
+   ```
 
-Security is a core part of the execution architecture.
+   PostgreSQL is exposed at `localhost:5433`, RabbitMQ at `localhost:5672`, Redis at `localhost:6379`, and the RabbitMQ management UI is at [http://localhost:15672](http://localhost:15672).
 
-The system will:
+   For a **fresh installation on another machine**, use `docker compose up -d` and wait for the services to become healthy. Compose creates a separate database volume; it does not import the original container's problems or accounts. The original PostgreSQL container and the Compose PostgreSQL container both require port 5433, so run only one of them at a time.
 
-- Never execute untrusted Java code directly in the main application process in the secured architecture
-- Isolate submitted programs in Docker containers
-- Apply execution time limits
-- Apply CPU and memory restrictions
-- Restrict network access
-- Restrict filesystem access
-- Clean up execution containers after completion
-- Authenticate protected APIs using Spring Security and JWT
+3. Start the backend in a second terminal.
 
+   ```powershell
+   Set-Location backend
+   .\mvnw.cmd spring-boot:run
+   ```
 
-## Running the Project
+   The backend loads `../.env` automatically when started from `backend`. It listens on [http://localhost:8080](http://localhost:8080). Hibernate creates or updates the local schema; use only a disposable development database until migrations are added.
 
-The project is currently under development. Setup and execution instructions will be expanded as the infrastructure is added.
+4. Start the frontend in a third terminal.
 
-The intended local development environment will use Docker Compose for infrastructure services such as:
+   ```powershell
+   Set-Location frontend
+   npm ci
+   npm run dev
+   ```
 
-```text
-PostgreSQL
-RabbitMQ
-Redis
+   Open [http://localhost:5173](http://localhost:5173). Vite proxies `/api` requests to the backend.
+
+## Verify the local stack
+
+Run these checks after startup:
+
+```powershell
+# Load the local configuration for the Redis check in this PowerShell session.
+Get-Content .env | ForEach-Object {
+  if ($_ -match '^([^#=]+)=(.*)$') { Set-Item -Path "Env:$($matches[1])" -Value $matches[2] }
+}
+
+docker ps
+docker exec codearena-postgres pg_isready -U codearena -d codearena
+docker exec codearena-rabbitmq-1 rabbitmq-diagnostics -q ping
+docker exec -e REDISCLI_AUTH=$env:REDIS_PASSWORD codearena-redis-1 redis-cli ping
 ```
 
-The Java backend and execution workers will be developed using Maven and Java 21+.
+The expected results are `accepting connections`, `Ping succeeded`, and `PONG`.
 
-## Engineering Concepts Demonstrated
+Then create an account at `/register`, log in, open a seeded/admin-created problem, run the supplied `Solution` code, and submit it. A completed submission should appear in **My submissions** and update the dashboard.
 
-This project is designed to demonstrate practical backend and distributed-system concepts, including:
+## Everyday commands
 
-- REST API design
-- Authentication and authorization
-- JWT security
-- Relational database modeling
-- JPA/Hibernate
-- Transaction management
-- Pagination and filtering
-- Asynchronous processing
-- Message queues
-- Worker pools
-- Retry and dead-letter handling
-- Caching
-- Concurrency
-- Containerization
-- Sandboxing
-- Resource limits
-- WebSockets
-- Exception handling
-- Validation
-- Logging and observability
-- Unit and integration testing
-- API documentation
-- CI/CD
-- Basic distributed-system design
+```powershell
+# Frontend quality checks
+Set-Location frontend
+npm run lint
+npm test
+npm run build
 
-## Project Status
+# Backend tests
+Set-Location ..\backend
+.\mvnw.cmd test
 
-🚧 **Under Development**
+# Stop infrastructure without deleting data
+Set-Location ..
+docker stop codearena-postgres codearena-rabbitmq-1 codearena-redis-1
+```
+
+## Architecture
+
+```text
+React + Monaco -> Spring Boot API -> PostgreSQL
+                              |-> Redis
+                              |-> RabbitMQ -> submission worker -> Docker Java sandbox
+```
+
+The backend application and RabbitMQ worker currently run in the same Spring Boot process. The queue keeps long-running judging off the HTTP request thread; Docker executes each submission in an isolated container.
+
+## Important development notes
+
+- Never use `app.runner.mode=local` with untrusted code. The default Docker mode is required for normal development.
+- `.env` contains credentials and is intentionally ignored by Git. `.env.example` contains placeholders only.
+- The Compose file manages dependencies, not the backend/frontend. Run those locally using the commands above so the Docker executor can access the host Docker daemon.
+- Container data stays in Docker volumes when stopped. The original PostgreSQL container uses its existing volume; Compose installations use separate named volumes.
+
+## Dry-run workspace
+
+Open a problem and select **Dry-run workspace**. Add elements using the toolbar, then select one on the canvas or through the element dropdown. The editor lets you update names, JSON array values, variable values, notes, pointer targets/indexes, and arrow endpoints/labels. Click **Apply changes**, then **Save** to persist the workspace.
+
+Use **Undo/Redo**, Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, or Ctrl+Y for workspace changes. Each drag is one undo step. Delete/Backspace removes the selected element when not typing in a field. Deleting an element removes connected arrows and detaches its pointers; undo restores them together. Editing fields keeps the browser's normal text undo behavior.
+
+## Reference documentation
+
+The design material and historical API notes are in [`Documentations/`](Documentations). The root README is the current local setup reference; update it whenever configuration or endpoints change.

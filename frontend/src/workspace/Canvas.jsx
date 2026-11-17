@@ -163,7 +163,7 @@ function ArrowShape({ element, boxes }) {
     )
 }
 
-export function Canvas({ elements, selectedId, onSelect, onMove }) {
+export function Canvas({ elements, selectedId, onSelect, onMove, onMoveStart, onMoveEnd }) {
     const svgRef = useRef(null)
     const dragRef = useRef(null)
     const boxes = useMemo(() => computeLayout(elements), [elements])
@@ -187,12 +187,14 @@ export function Canvas({ elements, selectedId, onSelect, onMove }) {
     }
 
     function startDrag(event, element, box) {
+        if (event.button !== 0) return
         event.stopPropagation()
         onSelect(element.id)
         if (element.type === 'ARROW' || !box || box.bound) {
             return
         }
         const point = toCanvasPoint(event)
+        onMoveStart()
         dragRef.current = { id: element.id, offsetX: point.x - element.x, offsetY: point.y - element.y }
         svgRef.current.setPointerCapture(event.pointerId)
     }
@@ -209,7 +211,9 @@ export function Canvas({ elements, selectedId, onSelect, onMove }) {
     }
 
     function endDrag() {
+        if (!dragRef.current) return
         dragRef.current = null
+        onMoveEnd()
     }
 
     return (
@@ -222,6 +226,7 @@ export function Canvas({ elements, selectedId, onSelect, onMove }) {
             onPointerMove={handleMove}
             onPointerUp={endDrag}
             onPointerCancel={endDrag}
+            onLostPointerCapture={endDrag}
         >
             <defs>
                 <marker
