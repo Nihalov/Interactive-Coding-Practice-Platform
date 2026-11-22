@@ -4,14 +4,14 @@ CodeArena is an interactive Java coding-practice platform. Users can browse prob
 
 ## What is implemented
 
-- Registration, login, JWT authentication, and role-protected admin APIs
+- Registration, login, JWT authentication, role-protected admin APIs, and an admin dashboard for problem/test-case management
 - Problem browsing with difficulty filtering and pagination
 - Sample execution and asynchronous submission judging through RabbitMQ
 - Docker-isolated Java execution with CPU, memory, process, timeout, output, filesystem, and network restrictions
 - PostgreSQL persistence, Redis-backed caching and rate limiting, submission recovery, and progress statistics
 - A React/Monaco editor, submission history, and a saved workspace with editable arrays, variables, pointers, notes, connecting arrows, deletion, and undo/redo
 
-The workspace editor and operational tooling are still being completed. WebSocket updates, a browser-based admin console, richer problem metadata, comprehensive automated tests, OpenAPI documentation, and CI are not implemented yet.
+Operational tooling is still being completed. WebSocket updates, richer problem metadata, comprehensive integration tests, OpenAPI documentation, and CI are not implemented yet.
 
 ## Prerequisites
 
@@ -128,7 +128,21 @@ Run the frontend workspace tests from `frontend`:
 npm test
 ```
 
-These cover workspace editing, reference cleanup, and undo/redo. Database/API integration, authentication/authorization, worker recovery, and actual Docker sandbox behavior still need separate test coverage.
+These cover workspace editing, reference cleanup, undo/redo, and admin HTTP request/response contracts. Database/API integration, authentication/authorization, worker recovery, and actual Docker sandbox behavior still need separate test coverage.
+
+## Admin dashboard
+
+Log in with an existing `ADMIN` account and select **Admin** in the navigation, or open `/admin`. The dashboard shows problem counts by difficulty, a paginated catalog, and links to create or manage problems.
+
+Use the difficulty cards or filters to narrow the library, sort by title or creation order, and choose 10, 25, or 50 rows per page. Editor forms show unsaved changes, validate required fields inline, and offer a plain-text statement preview. Leaving an edited form through navigation, browser Back, or logout asks whether to discard edits; refreshing or closing the tab uses the browser's native warning.
+
+Create a problem, then add its test cases on the management page. Test cases default to **Hidden**; choose **Sample** when the input and expected output should be visible to learners. Inputs and outputs may be empty, and their whitespace is preserved. You can edit or delete individual cases and change their visibility.
+
+The test-case list has separate sample/hidden filters. Switching or closing a test-case editor with unsaved edits asks for confirmation. Deletion uses keyboard-accessible confirmation dialogs; cancelling keeps the existing data and edits.
+
+Problem edits keep the existing slug/URL. Deleting a problem requires confirmation and is refused by the backend if submissions exist. Regular user accounts cannot access the admin pages, and all write/hidden-test endpoints continue to require the backend's `ADMIN` role.
+
+Registration always creates a `USER`; there is no public admin signup or role-changing control. If an existing account's role is changed through database administration, log out and log in again to obtain a JWT containing its new role.
 
 ## Important development notes
 

@@ -1,10 +1,18 @@
-import { api } from './client'
+import { api } from './client.js'
 
 export const progressApi = {
-    /** slug -> { solved, attempts, ... } for the user's most recently attempted problems (page size is capped at 50) */
+    /** Complete progress map; the backend caps each page at 50 entries. */
     async list() {
-        const page = await api('/api/users/me/progress?size=50')
-        return new Map(page.content.map((p) => [p.problemSlug, p]))
+        const entries = new Map()
+        let index = 0
+        let totalPages
+        do {
+            const page = await api(`/api/users/me/progress?page=${index}&size=50`)
+            page.content.forEach((p) => entries.set(p.problemSlug, p))
+            totalPages = page.totalPages
+            index++
+        } while (index < totalPages)
+        return entries
     },
 
     stats: () => api('/api/users/me/stats'),

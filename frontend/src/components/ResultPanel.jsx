@@ -1,4 +1,5 @@
 import { statusLabel, statusTone } from '../api/results'
+import { Icon } from './admin/Icon'
 
 function Block({ label, text, tone }) {
     const empty = text === null || text === undefined || text === ''
@@ -13,12 +14,12 @@ function Block({ label, text, tone }) {
 function CaseCard({ c }) {
     const tone = statusTone(c.status)
     return (
-        <div className="case">
-            <div className="case-head">
+        <details className={`case result-case ${tone}`} open={c.status !== 'ACCEPTED'}>
+            <summary className="case-head">
                 <strong>{c.sample ? `Test ${c.index}` : `Hidden test ${c.index}`}</strong>
                 <span className={`chip ${tone}`}>{statusLabel(c.status)}</span>
                 <span className="muted">{c.timeMs} ms</span>
-            </div>
+            </summary>
             {c.sample ? (
                 <>
                     <Block label="Input" text={c.input} />
@@ -29,7 +30,7 @@ function CaseCard({ c }) {
             ) : (
                 <p className="muted">Details of hidden tests are not shown.</p>
             )}
-        </div>
+        </details>
     )
 }
 
@@ -38,9 +39,9 @@ export function ResultPanel({ result }) {
     const showCounts = result.status !== 'COMPILATION_ERROR' && result.total > 0
 
     return (
-        <section className="result">
+        <section className={`result result-${tone}`} aria-label="Execution result">
             <header className="result-head">
-                <span className={`verdict ${tone}`}>{statusLabel(result.status)}</span>
+                <span className={`verdict ${tone}`} role="status"><Icon name={tone === 'good' ? 'check' : tone === 'pending' ? 'clock' : 'close'} size={19} />{statusLabel(result.status)}</span>
                 {showCounts && (
                     <span className="muted">
             {result.passed} / {result.total} tests passed

@@ -10,7 +10,7 @@ export function ProtectedRoute() {
     }
     if (!user) {
         // Remember where the user was going, so login can send them back
-        return <Navigate to="/login" replace state={{ from: location.pathname }} />
+        return <Navigate to="/login" replace state={{ from: location.pathname + location.search + location.hash }} />
     }
     return <Outlet />
 }

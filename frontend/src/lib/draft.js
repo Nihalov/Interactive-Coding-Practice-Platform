@@ -11,15 +11,17 @@ export function loadDraft(slug) {
 export function saveDraft(slug, code) {
     try {
         localStorage.setItem(key(slug), code)
+        return true
     } catch {
-        // storage full or blocked: the draft just isn't saved
+        return false
     }
 }
 
 export function clearDraft(slug) {
     try {
         localStorage.removeItem(key(slug))
+        return true
     } catch {
-        // ignore
+        return false
     }
 }

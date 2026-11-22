@@ -1,4 +1,3 @@
-import Editor from '@monaco-editor/react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
@@ -7,13 +6,19 @@ import { ACTIVE_STATUSES, fromSubmission, statusLabel } from '../api/results'
 import { submissionsApi, waitForSubmission } from '../api/submissions'
 import { ResultPanel } from '../components/ResultPanel'
 import { usePrefersDark } from '../hooks/usePrefersDark'
-import { saveDraft } from '../lib/draft'
+import { loadDraft, saveDraft } from '../lib/draft'
 import { formatDateTime } from '../lib/format'
+import { CodeEditor } from '../components/practice/CodeEditor'
+import { Icon } from '../components/admin/Icon'
+import { ConfirmDialog } from '../components/admin/ConfirmDialog'
+import { LoadingState } from '../components/practice/PracticeUI'
 
 function SubmissionView({ id }) {
     const dark = usePrefersDark()
     const navigate = useNavigate()
     const [state, setState] = useState({ submission: null, error: null })
+    const [replaceDraft, setReplaceDraft] = useState(false)
+    const [reuseError, setReuseError] = useState(null)
 
     useEffect(() => {
         const controller = new AbortController()
@@ -43,35 +48,32 @@ function SubmissionView({ id }) {
     if (state.error) {
         const notFound = state.error instanceof ApiError && state.error.status === 404
         return (
-            <div className="narrow">
+            <div className="practice-page">
                 <p className="error">{notFound ? 'Submission not found.' : describeError(state.error)}</p>
                 <Link to="/submissions">Back to submissions</Link>
             </div>
         )
     }
     if (!state.submission) {
-        return <p className="muted">Loading…</p>
+        return <LoadingState label="Loading submission…" />
     }
 
     const { submission } = state
 
     function handleReuse() {
-        // The problem page loads a saved draft when it opens
-        saveDraft(submission.problemSlug, submission.sourceCode)
-        navigate(`/problems/${submission.problemSlug}`)
+        const existing = loadDraft(submission.problemSlug)
+        if (existing !== null && existing !== submission.sourceCode) setReplaceDraft(true)
+        else reuse()
+    }
+    function reuse() {
+        if (saveDraft(submission.problemSlug, submission.sourceCode)) navigate(`/problems/${submission.problemSlug}`)
+        else { setReuseError('Your browser could not save this draft. Copy the code to keep it.'); setReplaceDraft(false) }
     }
 
     return (
-        <div className="narrow">
-            <p className="muted">
-                <Link to="/submissions">← All submissions</Link>
-            </p>
-            <h1>
-                <Link to={`/problems/${submission.problemSlug}`}>{submission.problemTitle}</Link>
-            </h1>
-            <p className="muted">
-                Submission #{submission.id} · {formatDateTime(submission.submittedAt)}
-            </p>
+        <div className="practice-page submission-detail">
+            <nav className="practice-breadcrumb" aria-label="Breadcrumb"><Link to="/submissions">My submissions</Link><span>/</span><span>#{submission.id}</span></nav>
+            <header className="practice-heading"><div><p className="practice-eyebrow">Submission #{submission.id}</p><h1><Link to={`/problems/${submission.problemSlug}`}>{submission.problemTitle}</Link></h1><p className="muted">{formatDateTime(submission.submittedAt)} · Java</p></div><button className="secondary" onClick={handleReuse}><Icon name="edit" size={16} />Use this code in the editor</button></header>
 
             {ACTIVE_STATUSES.has(submission.status) && (
                 <p className="muted">
@@ -80,29 +82,18 @@ function SubmissionView({ id }) {
                 </p>
             )}
 
-            <ResultPanel result={fromSubmission(submission)} />
+            <div className="practice-panel"><ResultPanel result={fromSubmission(submission)} /></div>
 
-            <h2>Your code</h2>
-            <div className="editor-box">
-                <Editor
+            <section className="practice-panel submitted-code"><div className="study-panel-heading"><span><Icon name="code" size={17} />Submitted code</span><span className="language-pill">Java · Read only</span></div>
+                <CodeEditor
                     height="360px"
-                    language="java"
-                    theme={dark ? 'vs-dark' : 'light'}
+                    dark={dark}
                     value={submission.sourceCode}
-                    options={{
-                        readOnly: true,
-                        minimap: { enabled: false },
-                        fontSize: 14,
-                        automaticLayout: true,
-                        scrollBeyondLastLine: false,
-                    }}
+                    readOnly
                 />
-            </div>
-            <div className="actions">
-                <button className="secondary" onClick={handleReuse}>
-                    Use this code in the editor
-                </button>
-            </div>
+            </section>
+            {reuseError && <p className="practice-error" role="alert">{reuseError}</p>}
+            {replaceDraft && <ConfirmDialog title="Replace your current draft?" confirmLabel="Use submitted code" cancelLabel="Keep my draft" onCancel={() => setReplaceDraft(false)} onConfirm={reuse}><p>You already have a different draft for this problem on this device. Using this submission replaces that draft.</p></ConfirmDialog>}
         </div>
     )
 }

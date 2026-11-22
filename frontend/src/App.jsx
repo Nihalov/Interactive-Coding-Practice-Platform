@@ -1,5 +1,6 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { createBrowserRouter, createRoutesFromElements, Navigate, Route, RouterProvider } from 'react-router-dom'
 import { ProtectedRoute } from './auth/ProtectedRoute'
+import { AdminRoute } from './auth/AdminRoute'
 import { Layout } from './components/Layout'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
@@ -9,10 +10,11 @@ import { RegisterPage } from './pages/RegisterPage'
 import { SubmissionDetailPage } from './pages/SubmissionDetailPage'
 import { SubmissionsPage } from './pages/SubmissionsPage'
 import { WorkspacePage } from './pages/WorkspacePage'
+import { AdminDashboardPage } from './pages/AdminDashboardPage'
+import { AdminNewProblemPage, AdminProblemPage } from './pages/AdminProblemPage'
 
-export default function App() {
-    return (
-        <Routes>
+const router = createBrowserRouter(createRoutesFromElements(
+        <>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
@@ -25,10 +27,18 @@ export default function App() {
                     <Route path="/problems/:slug/workspace" element={<WorkspacePage />} />
                     <Route path="/submissions" element={<SubmissionsPage />} />
                     <Route path="/submissions/:id" element={<SubmissionDetailPage />} />
+                    <Route element={<AdminRoute />}>
+                        <Route path="/admin" element={<AdminDashboardPage />} />
+                        <Route path="/admin/problems/new" element={<AdminNewProblemPage />} />
+                        <Route path="/admin/problems/:slug/edit" element={<AdminProblemPage />} />
+                    </Route>
                 </Route>
             </Route>
 
             <Route path="*" element={<p className="center-note">Page not found.</p>} />
-        </Routes>
-    )
+        </>,
+))
+
+export default function App() {
+    return <RouterProvider router={router} />
 }

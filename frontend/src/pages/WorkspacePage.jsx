@@ -9,6 +9,10 @@ import { ElementEditor } from '../workspace/ElementEditor'
 import { deleteElement, updateElement } from '../workspace/editing'
 import { createHistory, historyReducer } from '../workspace/history'
 import { MAX_ELEMENTS, createElement } from '../workspace/model'
+import { useDraftGuard } from '../hooks/useDraftGuard'
+import { ConfirmDialog } from '../components/admin/ConfirmDialog'
+import { Icon } from '../components/admin/Icon'
+import { PageHeading } from '../components/practice/PracticeUI'
 
 function WorkspaceEditor({ slug, problem, workspace, onReload }) {
     const initialElements = workspace.state?.elements ?? []
@@ -22,9 +26,11 @@ function WorkspaceEditor({ slug, problem, workspace, onReload }) {
     const [savedAt, setSavedAt] = useState(null)
     const [conflict, setConflict] = useState(false)
     const [saveError, setSaveError] = useState(null)
+    const [discarding, setDiscarding] = useState(false)
 
     const dirty = useMemo(() => JSON.stringify(elements) !== savedJson, [elements, savedJson])
     const full = elements.length >= MAX_ELEMENTS
+    useDraftGuard(dirty || saving)
     const selected = elements.find((e) => e.id === selectedId)
     const canConnect = elements.filter((e) => e.type !== 'ARROW').length >= 2
 
@@ -93,17 +99,6 @@ function WorkspaceEditor({ slug, problem, workspace, onReload }) {
         return () => window.removeEventListener('keydown', onKeyDown)
     }, [dirty, save])
 
-    // Closing or reloading the tab with unsaved work shows the browser's "Leave site?" prompt
-    useEffect(() => {
-        if (!dirty) return
-        function onBeforeUnload(event) {
-            event.preventDefault()
-            event.returnValue = ''
-        }
-        window.addEventListener('beforeunload', onBeforeUnload)
-        return () => window.removeEventListener('beforeunload', onBeforeUnload)
-    }, [dirty])
-
     const handleMove = useCallback((id, x, y) => {
         dispatch({ type: 'move', id, x, y })
     }, [])
@@ -116,9 +111,7 @@ function WorkspaceEditor({ slug, problem, workspace, onReload }) {
     }
 
     function handleDiscard() {
-        if (window.confirm('Discard your unsaved changes?')) {
-            onReload()
-        }
+        setDiscarding(true)
     }
 
     // "Overwrite with mine": read the current version, then save on top of it
@@ -138,10 +131,9 @@ function WorkspaceEditor({ slug, problem, workspace, onReload }) {
     else if (version !== null) status = 'All changes saved'
 
     return (
-        <div>
-            <p className="muted">
-                <Link to={`/problems/${slug}`}>← {problem.title}</Link>
-            </p>
+        <div className="practice-page learner-workspace">
+            <nav className="practice-breadcrumb" aria-label="Breadcrumb"><Link to={`/problems/${slug}`}>{problem.title}</Link><span>/</span><span>Workspace</span></nav>
+            <PageHeading eyebrow="Give your ideas room" title="Dry-run workspace" description="Trace an array, move a pointer, or leave yourself a note. Save your thinking for later."><Link className="button-link secondary" to={`/problems/${slug}`}><Icon name="code" size={16} />Back to editor</Link></PageHeading>
 
             <div className="ws-toolbar">
                 <button className="secondary" onClick={() => handleAdd('ARRAY')} disabled={full}>
@@ -223,6 +215,7 @@ function WorkspaceEditor({ slug, problem, workspace, onReload }) {
                         onDelete={removeSelected} />
                 ) : <aside className="panel ws-inspector"><p className="muted">Select an element to edit its contents or connections.</p></aside>}
             </div>
+            {discarding && <ConfirmDialog title="Discard workspace changes?" confirmLabel="Discard changes" cancelLabel="Keep editing" onCancel={() => setDiscarding(false)} onConfirm={onReload}><p>This reloads the last saved workspace. Your unsaved changes will be lost.</p></ConfirmDialog>}
         </div>
     )
 }
