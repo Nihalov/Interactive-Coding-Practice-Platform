@@ -112,6 +112,24 @@ React + Monaco -> Spring Boot API -> PostgreSQL
 
 The backend application and RabbitMQ worker currently run in the same Spring Boot process. The queue keeps long-running judging off the HTTP request thread; Docker executes each submission in an isolated container.
 
+## Automated tests
+
+Run the backend unit tests from `backend` with Java 25:
+
+```powershell
+.\mvnw.cmd test
+```
+
+These tests do not start Spring Boot, load `.env`, connect to PostgreSQL/RabbitMQ/Redis, or execute submitted Java code. `JudgeServiceTest` uses a deterministic execution session to check verdicts, output comparison, case ordering, stop-on-failure behavior, and cleanup/error propagation. `WorkspaceValidatorTest` checks schema and element limits, array values, coordinates, pointer references and indexes, and arrow endpoints.
+
+Run the frontend workspace tests from `frontend`:
+
+```powershell
+npm test
+```
+
+These cover workspace editing, reference cleanup, and undo/redo. Database/API integration, authentication/authorization, worker recovery, and actual Docker sandbox behavior still need separate test coverage.
+
 ## Important development notes
 
 - Never use `app.runner.mode=local` with untrusted code. The default Docker mode is required for normal development.
