@@ -19,6 +19,10 @@ const paths = {
     eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12 M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0',
     copy: 'M9 9h12v12H9z M15 9V3H3v12h6',
     expand: 'M8 3H3v5 M16 3h5v5 M3 16v5h5 M21 16v5h-5',
+    user: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M4 21v-2a8 8 0 0 1 16 0v2',
+    logout: 'M9 4H4v16h5 M14 8l4 4-4 4 M8 12h13',
+    chevron: 'M6 9l6 6 6-6',
+    search: 'M21 21l-5-5 M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0',
     activity: 'M2 12h5l3-8 4 16 3-8h5',
 }
 

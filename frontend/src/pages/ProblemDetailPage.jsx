@@ -14,6 +14,7 @@ import { CodeEditor } from '../components/practice/CodeEditor'
 import { Icon } from '../components/admin/Icon'
 import { ConfirmDialog } from '../components/admin/ConfirmDialog'
 import { DifficultyTag, ErrorState, LoadingState } from '../components/practice/PracticeUI'
+import { ProblemStartNotice } from '../components/practice/ProblemStartNotice'
 
 function actionMessage(err) {
     if (err instanceof ApiError && err.fieldErrors.sourceCode) return `Code ${err.fieldErrors.sourceCode}`
@@ -104,6 +105,7 @@ function ProblemWorkspace({ slug }) {
     return (
         <div className={`coding-page ${focused ? 'coding-focus' : ''}`}>
             <nav className="practice-breadcrumb" aria-label="Breadcrumb"><Link to="/problems">Problem library</Link><span>/</span><span>{problem.title}</span></nav>
+            <ProblemStartNotice slug={slug} />
             <header className="coding-heading"><div><h1>{problem.title}</h1><DifficultyTag value={problem.difficulty} /></div><div className="coding-links"><Link to={`/submissions?problem=${slug}`}><Icon name="activity" size={16} />My submissions</Link><Link to={`/problems/${slug}/workspace`}><Icon name="layers" size={16} />Dry-run workspace</Link></div></header>
             <div className="mobile-study-tabs" role="group" aria-label="Coding workspace view"><button aria-pressed={mobileView === 'problem'} onClick={() => setMobileView('problem')}>Problem</button><button aria-pressed={mobileView === 'code'} onClick={() => setMobileView('code')}>Code & results</button></div>
             <div className="coding-grid">

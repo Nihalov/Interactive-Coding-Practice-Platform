@@ -20,8 +20,9 @@ const router = createBrowserRouter(createRoutesFromElements(
 
             <Route element={<ProtectedRoute />}>
                 <Route element={<Layout />}>
-                    <Route index element={<Navigate to="/dashboard" replace />} />
-                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route index element={<Navigate to="/problems" replace />} />
+                    <Route path="/profile" element={<DashboardPage />} />
+                    <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
                     <Route path="/problems" element={<ProblemsPage />} />
                     <Route path="/problems/:slug" element={<ProblemDetailPage />} />
                     <Route path="/problems/:slug/workspace" element={<WorkspacePage />} />

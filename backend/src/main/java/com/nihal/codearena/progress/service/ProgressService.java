@@ -1,6 +1,7 @@
 package com.nihal.codearena.progress.service;
 
 import com.nihal.codearena.common.response.PageResponse;
+import com.nihal.codearena.common.exception.ResourceNotFoundException;
 import com.nihal.codearena.problem.entity.Difficulty;
 import com.nihal.codearena.problem.entity.Problem;
 import com.nihal.codearena.problem.repository.ProblemRepository;
@@ -32,6 +33,14 @@ public class ProgressService {
     private final ProblemRepository problemRepository;
     private final SubmissionRepository submissionRepository;
 
+    /** Opening a problem starts practice without counting a judged submission or resetting an existing result. */
+    @Transactional
+    public void start(Long userId, String slug) {
+        Problem problem = problemRepository.findBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Problem not found"));
+        progressRepository.insertIfAbsent(userId, problem.getId(), LocalDateTime.now());
+    }
+
     /**
      * Called from inside the transaction that saves a submission's final verdict,
      * so the verdict and the progress commit (or roll back) together.
@@ -40,7 +49,7 @@ public class ProgressService {
     public void record(Long userId, Long problemId, Long submissionId,
                        SubmissionStatus status, long executionTimeMs, LocalDateTime finishedAt) {
 
-        progressRepository.insertIfAbsent(userId, problemId);
+        progressRepository.insertIfAbsent(userId, problemId, finishedAt);
         UserProblemProgress progress = progressRepository.findForUpdate(userId, problemId)
                 .orElseThrow(() -> new IllegalStateException("Progress row missing after insert"));
 

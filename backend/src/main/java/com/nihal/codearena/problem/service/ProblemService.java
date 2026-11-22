@@ -31,14 +31,18 @@ public class ProblemService {
     // No @Transactional on the two reads: a cache hit must not touch the database at all.
     // The repository calls inside the loaders open their own short read transactions.
 
-    public PageResponse<ProblemSummaryResponse> list(Difficulty difficulty, Pageable pageable) {
+    public PageResponse<ProblemSummaryResponse> list(Difficulty difficulty, String query, Pageable pageable) {
+        String search = query == null ? "" : query.trim();
         String variant = (difficulty == null ? "ALL" : difficulty.name())
                 + ":" + pageable.getPageNumber()
                 + ":" + pageable.getPageSize()
                 + ":" + pageable.getSort();
+        if (!search.isEmpty()) variant += ":q:" + search;
 
         return problemCache.list(variant, () -> {
-            Page<Problem> page = (difficulty == null)
+            Page<Problem> page = !search.isEmpty()
+                    ? problemRepository.search(search, difficulty, pageable)
+                    : (difficulty == null)
                     ? problemRepository.findAll(pageable)
                     : problemRepository.findByDifficulty(difficulty, pageable);
             return ProblemPageSnapshot.from(PageResponse.from(page.map(this::toSummary)));

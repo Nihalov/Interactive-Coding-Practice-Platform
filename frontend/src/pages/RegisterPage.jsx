@@ -18,7 +18,7 @@ export function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false)
 
     if (user) {
-        return <Navigate to="/" replace />
+        return <Navigate to="/problems" replace />
     }
 
     async function handleSubmit(event) {

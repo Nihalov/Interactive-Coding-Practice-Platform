@@ -25,8 +25,9 @@ public class ProblemController {
     @GetMapping
     public PageResponse<ProblemSummaryResponse> list(
             @RequestParam(required = false) Difficulty difficulty,
+            @RequestParam(required = false) String q,
             @PageableDefault(size = 20, sort = "id") Pageable pageable) {
-        return problemService.list(difficulty, pageable);
+        return problemService.list(difficulty, q, pageable);
     }
 
     @GetMapping("/{slug}")

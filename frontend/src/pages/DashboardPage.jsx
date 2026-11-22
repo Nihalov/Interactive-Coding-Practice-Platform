@@ -51,7 +51,7 @@ export function DashboardPage() {
                         <div className="dashboard-main">
                             <section className="continue-card">
                                 <span className="continue-icon"><Icon name={next ? 'play' : 'code'} size={22} /></span>
-                                <div><p className="practice-eyebrow">{next ? 'Pick up where you left off' : 'Your next challenge'}</p><h2>{next ? next.problemTitle : 'One problem closer.'}</h2><p>{next ? `${next.attempts} attempts so far. Try a different angle, or trace it in the workspace.` : 'Choose a problem, sketch your approach, and turn your idea into working code.'}</p><Link className="button-link" to={next ? `/problems/${next.problemSlug}` : '/problems'}>{next ? 'Continue practicing' : 'Find a problem'}<Icon name="arrow" size={16} /></Link></div>
+                                <div><p className="practice-eyebrow">{next ? 'Pick up where you left off' : 'Your next challenge'}</p><h2>{next ? next.problemTitle : 'One problem closer.'}</h2><p>{next ? next.attempts > 0 ? `${next.attempts} attempts so far. Try a different angle, or trace it in the workspace.` : 'You’ve started this problem. Pick up your approach in the editor or workspace.' : 'Choose a problem, sketch your approach, and turn your idea into working code.'}</p><Link className="button-link" to={next ? `/problems/${next.problemSlug}` : '/problems'}>{next ? 'Continue practicing' : 'Find a problem'}<Icon name="arrow" size={16} /></Link></div>
                             </section>
                             <section className="practice-panel">
                                 <div className="practice-section-heading"><div><h2>Recent practice</h2><p>Your latest problem-solving activity.</p></div><Link className="text-action" to="/submissions">View submissions<Icon name="arrow" size={15} /></Link></div>
@@ -59,7 +59,7 @@ export function DashboardPage() {
                                     <div className="recent-practice-list">{state.recent.map((p) => (
                                         <article className="recent-practice-item" key={p.problemSlug}>
                                             <span className={`practice-status-icon ${p.solved ? 'solved' : 'attempted'}`}><Icon name={p.solved ? 'check' : 'clock'} size={17} /></span>
-                                            <div className="recent-practice-info"><Link to={`/problems/${p.problemSlug}`}>{p.problemTitle}</Link><div><DifficultyTag value={p.difficulty} /><span>{p.attempts} attempts</span><span>{formatDateTime(p.lastAttemptAt)}</span></div></div>
+                                            <div className="recent-practice-info"><Link to={`/problems/${p.problemSlug}`}>{p.problemTitle}</Link><div><DifficultyTag value={p.difficulty} /><span>{p.attempts > 0 ? `${p.attempts} ${p.attempts === 1 ? 'attempt' : 'attempts'}` : 'Not submitted yet'}</span><span>{formatDateTime(p.lastAttemptAt)}</span></div></div>
                                             <div className="recent-practice-end"><span className={`practice-status ${p.solved ? 'solved' : 'attempted'}`}>{p.solved ? 'Solved' : 'In progress'}</span>{p.bestSubmissionId && <Link to={`/submissions/${p.bestSubmissionId}`}>{formatDuration(p.bestTimeMs)} best</Link>}</div>
                                         </article>
                                     ))}</div>

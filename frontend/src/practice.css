@@ -1,4 +1,22 @@
 .page-practice { max-width: 1440px; padding: 2rem; }
+.profile-menu { position: relative; margin-left: auto; flex-shrink: 0; }
+.profile-trigger { display: inline-flex; align-items: center; gap: 0.55rem; padding: 0.35rem 0.55rem; border: 1px solid transparent; border-radius: 9px; background: transparent; color: var(--text); font-size: 0.8rem; font-weight: 550; }
+.profile-trigger:hover, .profile-trigger[aria-expanded='true'] { background: var(--bg); border-color: var(--border); }
+.profile-trigger.active { background: var(--primary-soft); color: var(--primary); }
+.profile-trigger[aria-expanded='true'] > svg { transform: rotate(180deg); }
+.profile-avatar { display: grid; place-items: center; width: 29px; height: 29px; border: 1px solid color-mix(in srgb, var(--primary) 15%, var(--border)); border-radius: 50%; background: var(--primary-soft); color: var(--primary); font-size: 0.75rem; font-weight: 650; flex: 0 0 auto; }
+.profile-popover { position: absolute; z-index: 30; top: calc(100% + 0.65rem); right: 0; width: min(270px, calc(100vw - 2.5rem)); padding: 0.4rem; border: 1px solid var(--border); border-radius: 11px; background: var(--surface); box-shadow: 0 12px 35px rgb(0 0 0 / 12%); }
+.profile-identity { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.8rem 0.65rem 1rem; margin-bottom: 0.3rem; border-bottom: 1px solid var(--border); }
+.profile-identity > div { display: grid; gap: 0.2rem; min-width: 0; }
+.profile-identity strong { font-size: 0.8rem; font-weight: 600; overflow-wrap: anywhere; }
+.profile-identity span:not(.profile-avatar) { color: var(--muted); font-size: 0.7rem; overflow-wrap: anywhere; }
+.profile-identity small { color: var(--primary); font-size: 0.65rem; }
+.profile-popover [role='menuitem'] { display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.7rem 0.65rem; border: 0; border-radius: 6px; background: transparent; color: var(--text); font: inherit; font-size: 0.8rem; font-weight: 450; text-decoration: none; text-align: left; cursor: pointer; }
+.profile-popover [role='menuitem']:hover, .profile-popover [role='menuitem']:focus-visible { background: var(--bg); }
+.profile-popover a > svg:last-child { margin-left: auto; color: var(--muted); }
+.profile-popover [aria-current='page'] { color: var(--primary); background: var(--primary-soft); }
+.profile-menu-divider { height: 1px; background: var(--border); margin: 0.3rem 0; }
+.profile-popover .profile-logout { color: var(--danger); }
 .practice-page { max-width: 1230px; width: 100%; margin: 0 auto; min-width: 0; }
 .practice-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.25rem; margin-bottom: 1.8rem; }
 .practice-heading > div { min-width: 0; }
@@ -76,6 +94,21 @@
 .library-tip div > span { color: var(--muted); font-size: 0.78rem; }
 .library-tip > svg { color: var(--primary); opacity: 0.5; }
 .practice-toolbar { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.library-toolbar { justify-content: flex-start; gap: 0.85rem; }
+.library-controls { display: flex; align-items: center; gap: 0.85rem; flex: 1 1 510px; min-width: 0; }
+.library-toolbar .library-sort { margin-left: auto; }
+.library-toolbar .library-difficulty-select { display: none; }
+.problem-search { width: 240px; max-width: 100%; flex: 0 1 240px; }
+.problem-search-field { display: flex; align-items: center; gap: 0.5rem; min-width: 0; padding: 0 0.65rem; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--muted); }
+.problem-search-field:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.problem-search-field > svg { flex-shrink: 0; }
+.problem-search input { width: 100%; min-width: 0; border: 0; background: transparent; color: var(--text); padding: 0.6rem 0; font: inherit; font-size: 0.78rem; outline: none; box-shadow: none; }
+.problem-search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.problem-search .problem-search-clear { padding: 0.35rem; border: 0; background: transparent; color: var(--muted); border-radius: 5px; flex-shrink: 0; }
+.problem-search-clear:hover { color: var(--text); background: var(--bg); }
+.problem-search-field:has(input:placeholder-shown) .problem-search-clear { visibility: hidden; }
+.problem-search-summary { margin: 0 0 1rem; color: var(--muted); font-size: 0.8rem; overflow-wrap: anywhere; }
+.problem-search-summary strong { color: var(--text); font-weight: 550; }
 .practice-segments { display: inline-flex; gap: 3px; padding: 4px; border-radius: 8px; background: var(--bg); flex-wrap: wrap; }
 .practice-segments button { border: 1px solid transparent; background: transparent; color: var(--muted); border-radius: 6px; font-size: 0.78rem; padding: 0.45rem 0.75rem; font-weight: 500; }
 .practice-segments button.active { border-color: var(--border); color: var(--text); background: var(--surface); box-shadow: 0 1px 2px rgb(0 0 0 / 3%); }
@@ -265,6 +298,14 @@
   .practice-segments { width: 100%; justify-content: space-between; gap: 0; }
   .practice-segments button { font-size: 0.7rem; padding: 0.45rem 0.5rem; }
   .practice-toolbar > .practice-select { margin-left: auto; }
+  .library-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem; }
+  .library-toolbar .problem-search { grid-column: 1 / -1; }
+  .library-controls { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem; }
+  .library-toolbar .library-difficulty-segments { display: none; }
+  .library-toolbar .library-difficulty-select { display: flex; }
+  .library-toolbar .library-controls > .practice-select { margin-left: 0; min-width: 0; }
+  .library-controls > .practice-select > span { display: none; }
+  .library-toolbar .practice-select select { width: 100%; min-width: 0; }
   .practice-table { min-width: 0; }
   .practice-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .practice-table tbody { display: block; }

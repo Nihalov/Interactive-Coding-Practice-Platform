@@ -1,8 +1,9 @@
-import { api } from './client'
+import { api } from './client.js'
 
 export const problemsApi = {
-    list: ({ difficulty, page, size, sort }) => {
+    list: ({ difficulty, q, page, size, sort }) => {
         const query = new URLSearchParams({ page: String(page), size: String(size) })
+        if (q?.trim()) query.set('q', q.trim())
         if (difficulty) {
             query.set('difficulty', difficulty)
         }

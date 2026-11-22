@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,11 +21,12 @@ public interface UserProblemProgressRepository extends JpaRepository<UserProblem
     /** Creates the row if it does not exist; the unique constraint decides, not an if-check. */
     @Modifying
     @Query(value = """
-            insert into user_problem_progress (user_id, problem_id, solved, attempts)
-            values (:userId, :problemId, false, 0)
+            insert into user_problem_progress (user_id, problem_id, solved, attempts, last_attempt_at)
+            values (:userId, :problemId, false, 0, :startedAt)
             on conflict (user_id, problem_id) do nothing
             """, nativeQuery = true)
-    int insertIfAbsent(@Param("userId") Long userId, @Param("problemId") Long problemId);
+    int insertIfAbsent(@Param("userId") Long userId, @Param("problemId") Long problemId,
+                       @Param("startedAt") LocalDateTime startedAt);
 
     /** SELECT ... FOR UPDATE: concurrent finalizers for the same user and problem take turns. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)

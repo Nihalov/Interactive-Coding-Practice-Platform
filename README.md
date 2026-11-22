@@ -5,7 +5,8 @@ CodeArena is an interactive Java coding-practice platform. Users can browse prob
 ## What is implemented
 
 - Registration, login, JWT authentication, role-protected admin APIs, and an admin dashboard for problem/test-case management
-- Problem browsing with difficulty filtering and pagination
+- Problem browsing with case-insensitive title/slug search, difficulty filtering, sorting, and pagination
+- Opening a problem editor or dry-run workspace saves an in-progress status; judged submissions count attempts and accepted solutions mark problems solved
 - Sample execution and asynchronous submission judging through RabbitMQ
 - Docker-isolated Java execution with CPU, memory, process, timeout, output, filesystem, and network restrictions
 - PostgreSQL persistence, Redis-backed caching and rate limiting, submission recovery, and progress statistics

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { afterEach, beforeEach, mock, test } from 'node:test'
 import { progressApi } from '../src/api/progress.js'
+import { problemsApi } from '../src/api/problems.js'
 import { clearDraft, loadDraft, saveDraft } from '../src/lib/draft.js'
 
 const originalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
@@ -35,6 +36,57 @@ test('empty progress completes after one request', async () => {
     const fetchMock = mock.method(globalThis, 'fetch', async () => Response.json({ content: [], totalPages: 0 }))
     assert.equal((await progressApi.list()).size, 0)
     assert.equal(fetchMock.mock.callCount(), 1)
+})
+
+test('returning to the library waits for an in-flight problem start before reading progress', async () => {
+    let finishStart
+    const fetchMock = mock.method(globalThis, 'fetch', async (path, options) => {
+        if (path.endsWith('/start')) {
+            assert.equal(path, '/api/users/me/progress/a%2B-b/start')
+            assert.equal(options.method, 'PUT')
+            return new Promise((resolve) => { finishStart = resolve })
+        }
+        return Response.json({ content: [{ problemSlug: 'a+-b', solved: false, attempts: 0 }], totalPages: 1 })
+    })
+    const starting = progressApi.start('a+-b')
+    const reading = progressApi.list()
+    assert.equal(fetchMock.mock.callCount(), 1)
+    finishStart(new Response(null, { status: 204 }))
+    await starting
+    const map = await reading
+    assert.equal(map.get('a+-b').attempts, 0)
+    assert.equal(map.get('a+-b').solved, false)
+    assert.equal(fetchMock.mock.callCount(), 2)
+})
+
+test('a failed start is reported and does not block subsequent progress reads', async () => {
+    mock.method(globalThis, 'fetch', async (path) => path.endsWith('/start')
+        ? new Response(null, { status: 500 })
+        : Response.json({ content: [], totalPages: 0 }))
+    await assert.rejects(progressApi.start('missing'), (error) => error.status === 500)
+    assert.equal((await progressApi.list()).size, 0)
+})
+
+test('problem searches preserve pagination and filters and encode literal search characters', async () => {
+    mock.method(globalThis, 'fetch', async (path) => {
+        const url = new URL(path, 'http://localhost')
+        assert.equal(url.pathname, '/api/problems')
+        assert.equal(url.searchParams.get('q'), 'Two Sum & 100%_')
+        assert.equal(url.searchParams.get('difficulty'), 'EASY')
+        assert.equal(url.searchParams.get('page'), '1')
+        assert.equal(url.searchParams.get('size'), '25')
+        assert.equal(url.searchParams.get('sort'), 'title,asc')
+        return Response.json({ content: [], totalPages: 0 })
+    })
+    await problemsApi.list({ q: '  Two Sum & 100%_  ', difficulty: 'EASY', page: 1, size: 25, sort: 'title,asc' })
+})
+
+test('blank searches request the unfiltered library', async () => {
+    mock.method(globalThis, 'fetch', async (path) => {
+        assert.equal(new URL(path, 'http://localhost').searchParams.has('q'), false)
+        return Response.json({ content: [], totalPages: 0 })
+    })
+    await problemsApi.list({ q: '   ', page: 0, size: 10 })
 })
 
 test('a later progress-page failure rejects rather than presenting partial markers as complete', async () => {

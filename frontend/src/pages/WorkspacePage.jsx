@@ -13,6 +13,7 @@ import { useDraftGuard } from '../hooks/useDraftGuard'
 import { ConfirmDialog } from '../components/admin/ConfirmDialog'
 import { Icon } from '../components/admin/Icon'
 import { PageHeading } from '../components/practice/PracticeUI'
+import { ProblemStartNotice } from '../components/practice/ProblemStartNotice'
 
 function WorkspaceEditor({ slug, problem, workspace, onReload }) {
     const initialElements = workspace.state?.elements ?? []
@@ -134,6 +135,7 @@ function WorkspaceEditor({ slug, problem, workspace, onReload }) {
         <div className="practice-page learner-workspace">
             <nav className="practice-breadcrumb" aria-label="Breadcrumb"><Link to={`/problems/${slug}`}>{problem.title}</Link><span>/</span><span>Workspace</span></nav>
             <PageHeading eyebrow="Give your ideas room" title="Dry-run workspace" description="Trace an array, move a pointer, or leave yourself a note. Save your thinking for later."><Link className="button-link secondary" to={`/problems/${slug}`}><Icon name="code" size={16} />Back to editor</Link></PageHeading>
+            <ProblemStartNotice slug={slug} />
 
             <div className="ws-toolbar">
                 <button className="secondary" onClick={() => handleAdd('ARRAY')} disabled={full}>

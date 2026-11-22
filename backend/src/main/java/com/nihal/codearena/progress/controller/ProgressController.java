@@ -11,6 +11,10 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,6 +24,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProgressController {
 
     private final ProgressService progressService;
+
+    @PutMapping("/progress/{slug}/start")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void start(@AuthenticationPrincipal Jwt jwt, @PathVariable String slug) {
+        progressService.start(Long.parseLong(jwt.getSubject()), slug);
+    }
 
     @GetMapping("/progress")
     public PageResponse<ProgressResponse> progress(

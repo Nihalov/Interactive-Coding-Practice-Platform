@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Navigate, useLocation } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { describeError } from '../api/errors'
 import { useAuth } from '../auth/useAuth'
 import { ApiError } from '../api/client'
@@ -8,8 +8,6 @@ import { Icon } from '../components/admin/Icon'
 
 export function LoginPage() {
     const { user, login } = useAuth()
-    const location = useLocation()
-    const from = location.state?.from ?? '/'
 
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -20,7 +18,7 @@ export function LoginPage() {
 
     // Already logged in (or just logged in): leave this page
     if (user) {
-        return <Navigate to={from} replace />
+        return <Navigate to="/problems" replace />
     }
 
     async function handleSubmit(event) {
