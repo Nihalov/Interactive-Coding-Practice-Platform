@@ -35,16 +35,18 @@ Operational tooling is still being completed. WebSocket updates, richer problem 
 
    Replace every `CHANGE_ME` value. Use a distinct, locally generated value for `JWT_SECRET` that is at least 32 characters long.
 
-2. Start PostgreSQL, RabbitMQ, and Redis. On the current development machine, reuse the existing containers to keep the original problems and accounts:
+2. Start PostgreSQL, RabbitMQ, and Redis through Compose:
 
    ```powershell
-   docker start codearena-postgres codearena-rabbitmq-1 codearena-redis-1
-   docker ps
+   docker compose up -d
+   docker compose ps
    ```
 
    PostgreSQL is exposed at `localhost:5433`, RabbitMQ at `localhost:5672`, Redis at `localhost:6379`, and the RabbitMQ management UI is at [http://localhost:15672](http://localhost:15672).
 
-   For a **fresh installation on another machine**, use `docker compose up -d` and wait for the services to become healthy. Compose creates a separate database volume; it does not import the original container's problems or accounts. The original PostgreSQL container and the Compose PostgreSQL container both require port 5433, so run only one of them at a time.
+   On the current development machine, an ignored `compose.override.yaml` automatically selects `postgres:16` and reuses the original database volume as an external volume. The database runs as `codearena-postgres-1` inside the `codearena` stack. The old standalone `codearena-postgres` container is retained but must stay stopped: it uses the same data and port. Database backups are kept in the ignored `backups/` directory.
+
+   For a **fresh installation on another machine**, the base Compose file creates a new database volume. It does not import existing problems or accounts. To reuse an existing PostgreSQL installation, stop its container before starting Compose, use a compatible image and data mount, and configure its volume as external in a local override. Never run two PostgreSQL servers against the same data directory.
 
 3. Start the backend in a second terminal.
 
@@ -76,7 +78,7 @@ Get-Content .env | ForEach-Object {
 }
 
 docker ps
-docker exec codearena-postgres pg_isready -U codearena -d codearena
+docker compose exec postgres pg_isready -U codearena -d codearena
 docker exec codearena-rabbitmq-1 rabbitmq-diagnostics -q ping
 docker exec -e REDISCLI_AUTH=$env:REDIS_PASSWORD codearena-redis-1 redis-cli ping
 ```
@@ -100,7 +102,7 @@ Set-Location ..\backend
 
 # Stop infrastructure without deleting data
 Set-Location ..
-docker stop codearena-postgres codearena-rabbitmq-1 codearena-redis-1
+docker compose stop
 ```
 
 ## Architecture

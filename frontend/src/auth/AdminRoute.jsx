@@ -26,7 +26,7 @@ export function AdminRoute() {
                     </NavLink>
                     <NavLink to="/admin/problems/new"><Icon name="plus" />New problem</NavLink>
                 </nav>
-                <div className="admin-sidebar-footer"><span className="sidebar-rule" /><Link to="/problems"><Icon name="external" />Open practice view</Link><p>Great problems start with clear statements and thoughtful tests.</p></div>
+                <div className="admin-sidebar-footer"><span className="sidebar-rule" /><p>Great problems start with clear statements and thoughtful tests.</p></div>
             </aside>
             <Outlet />
         </div>

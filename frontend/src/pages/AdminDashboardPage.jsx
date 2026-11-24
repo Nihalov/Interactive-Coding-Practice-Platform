@@ -135,7 +135,6 @@ export function AdminDashboardPage() {
                                         <td><span className={`difficulty-pill ${problem.difficulty.toLowerCase()}`}><span /><DifficultyBadge value={problem.difficulty} /></span></td>
                                         <td><div className="admin-actions">
                                             <Link className="manage-link" to={`/admin/problems/${problem.slug}/edit`}>Manage<Icon name="arrow" size={15} /></Link>
-                                            <Link className="icon-link" to={`/problems/${problem.slug}`} aria-label={`View ${problem.title}`} title="View problem"><Icon name="external" size={16} /></Link>
                                         </div></td>
                                     </tr>
                                 ))}</tbody>

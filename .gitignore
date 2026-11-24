@@ -8,6 +8,9 @@ desktop.ini
 
 ### Secrets / local env ###
 .env
+/backups/
+/compose.override.yaml
+/compose.override.yml
 application-local.yml
 application-local.properties
 **/secrets.yml

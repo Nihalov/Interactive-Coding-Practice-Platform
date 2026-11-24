@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Icon } from './admin/Icon'
 
-export function ProfileMenu({ user, active, onLogout }) {
+export function ProfileMenu({ user, dashboardPath, active, onLogout }) {
     const [open, setOpen] = useState(false)
     const rootRef = useRef(null)
     const triggerRef = useRef(null)
@@ -61,7 +61,7 @@ export function ProfileMenu({ user, active, onLogout }) {
             {open && <div className="profile-popover">
                 <div className="profile-identity"><span className="profile-avatar" aria-hidden="true">{initial}</span><div><strong>{user.username}</strong>{user.email && <span>{user.email}</span>}{user.role === 'ADMIN' && <small>Administrator</small>}</div></div>
                 <div role="menu" id={menuId} aria-labelledby={`${menuId}-trigger`}>
-                    <Link role="menuitem" to="/profile" aria-current={active ? 'page' : undefined} onClick={close}><Icon name="user" size={17} />View dashboard<Icon name="arrow" size={15} /></Link>
+                    <Link role="menuitem" to={dashboardPath} aria-current={active ? 'page' : undefined} onClick={close}><Icon name={user.role === 'ADMIN' ? 'shield' : 'user'} size={17} />View dashboard<Icon name="arrow" size={15} /></Link>
                     <div className="profile-menu-divider" role="separator" />
                     <button type="button" role="menuitem" className="profile-logout" onClick={() => { close(); onLogout() }}><Icon name="logout" size={17} />Log out</button>
                 </div>

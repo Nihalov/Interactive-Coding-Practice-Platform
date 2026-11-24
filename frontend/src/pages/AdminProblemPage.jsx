@@ -71,7 +71,6 @@ function ExistingProblem({ slug }) {
             <nav className="admin-breadcrumb" aria-label="Breadcrumb"><Link to="/admin">Problem library</Link><span aria-hidden="true">/</span><span>{problem.title}</span></nav>
             <div className="admin-heading admin-page-heading">
                 <div><p className="admin-eyebrow">Problem editor</p><h1>{problem.title}</h1><div className="editor-meta"><DifficultyBadge value={problem.difficulty} /><span>/{problem.slug}</span></div></div>
-                <Link className="button-link secondary" to={`/problems/${problem.slug}`}><Icon name="external" size={16} />View problem</Link>
             </div>
             <div className="admin-editor-layout">
             <div className="admin-editor-main">

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import { HomeRedirect } from '../auth/RoleRoutes'
 import { ApiError } from '../api/client'
 import { describeError } from '../api/errors'
 import { useAuth } from '../auth/useAuth'
@@ -18,7 +19,7 @@ export function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false)
 
     if (user) {
-        return <Navigate to="/problems" replace />
+        return <HomeRedirect />
     }
 
     async function handleSubmit(event) {

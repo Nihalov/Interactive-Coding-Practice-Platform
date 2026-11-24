@@ -1,6 +1,7 @@
 import { createBrowserRouter, createRoutesFromElements, Navigate, Route, RouterProvider } from 'react-router-dom'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { AdminRoute } from './auth/AdminRoute'
+import { HomeRedirect, PracticeRoute } from './auth/RoleRoutes'
 import { Layout } from './components/Layout'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
@@ -20,14 +21,16 @@ const router = createBrowserRouter(createRoutesFromElements(
 
             <Route element={<ProtectedRoute />}>
                 <Route element={<Layout />}>
-                    <Route index element={<Navigate to="/problems" replace />} />
-                    <Route path="/profile" element={<DashboardPage />} />
-                    <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
-                    <Route path="/problems" element={<ProblemsPage />} />
-                    <Route path="/problems/:slug" element={<ProblemDetailPage />} />
-                    <Route path="/problems/:slug/workspace" element={<WorkspacePage />} />
-                    <Route path="/submissions" element={<SubmissionsPage />} />
-                    <Route path="/submissions/:id" element={<SubmissionDetailPage />} />
+                    <Route index element={<HomeRedirect />} />
+                    <Route element={<PracticeRoute />}>
+                        <Route path="/profile" element={<DashboardPage />} />
+                        <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
+                        <Route path="/problems" element={<ProblemsPage />} />
+                        <Route path="/problems/:slug" element={<ProblemDetailPage />} />
+                        <Route path="/problems/:slug/workspace" element={<WorkspacePage />} />
+                        <Route path="/submissions" element={<SubmissionsPage />} />
+                        <Route path="/submissions/:id" element={<SubmissionDetailPage />} />
+                    </Route>
                     <Route element={<AdminRoute />}>
                         <Route path="/admin" element={<AdminDashboardPage />} />
                         <Route path="/admin/problems/new" element={<AdminNewProblemPage />} />
